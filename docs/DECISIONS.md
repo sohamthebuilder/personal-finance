@@ -114,3 +114,25 @@ One entry per decision that later phases need to know. Newest at the bottom. No 
 - **Decision:** Add `pre-merge-commit` and `pre-push` hooks alongside `pre-commit`.
 - **Why:** Merges and cherry-picks skip `pre-commit`, and the pull request check only runs after the data has reached GitHub. `pre-push` is the last check that can stop it leaving the Mac. It scans all refs plus the commits being pushed, so a commit pushed by hash is covered.
 - **Consequence:** While a bad commit exists on any local branch, every push is refused, even of clean branches. That errs on the safe side.
+
+## D-016: Personas as project skills
+
+- **Phase:** After Phase 0
+- **Decision:** Each persona is a short skill in `.claude/skills/`. `CLAUDE.md` holds the working rules, and `CONSTRAINTS.md` holds the quality bar, budget and merge checklist.
+- **Why:** The Phase 0 review found no agreed "good enough" line, agents filling their context, and a merge with a required check unfinished.
+- **Source:** Useful ideas from `addyosmani/agent-skills` are rewritten in our own words, so agent instructions still come from the owner and project docs (D-013).
+- **Consequence:** The full third-party packs stay in `.agents/`, which git ignores. Claude Code doesn't load them. `skills-lock.json` records what was installed.
+
+## D-017: stageshow is for design previews only
+
+- **Phase:** After Phase 0
+- **Decision:** The designer may use `stageshow` for previews, demos and motion guidance. Its kit doesn't go into the app.
+- **Why:** It draws illustrations of a product, not working screens. Its kit has many inline styles (D-010), and it brings its own React version and `lucide-react`, which would need the D-004 check.
+- **Consequence:** Previews use made-up data and no bank or card logos. Any stageshow install or run stays outside this project's dependencies.
+
+## D-018: Owner approves requirements first
+
+- **Phase:** After Phase 0
+- **Decision:** Everything from the PM and AI PM is a proposal until the owner accepts it in chat. Agents stop and wait for that, even in auto mode. Any later requirement change goes through the same gate.
+- **Why:** Checking requirements at the start prevents rework and unneeded changes later.
+- **Consequence:** A phase pauses until the owner replies. The approval is recorded in the brief, and builders check that record before they start. This is an instruction to agents, not a technical lock.

@@ -212,6 +212,8 @@ Each phase is small, runs in **its own fresh session**, and ends in something yo
 
 **QA and Security run as separate agents with fresh context**, so they check the work independently rather than the author marking their own homework.
 
+Each persona is a project skill in `.claude/skills/` (`persona-pm`, `persona-ai-pm`, `persona-designer`, `persona-engineer`, `persona-ai-fde`, `persona-qa`, `persona-security`). `docs/phases/README.md` has the steps, tasks and skills for each phase, and `CONSTRAINTS.md` has the quality bar.
+
 ### Phases
 
 | # | Phase | You can check | Personas |
@@ -233,12 +235,12 @@ Each phase is small, runs in **its own fresh session**, and ends in something yo
 
 ### What happens inside a phase
 
-1. **Plan:** PM, and AI PM when relevant, writes the phase brief. All questions for you come in **one batch**.
+1. **Plan:** PM, and AI PM when relevant, writes the phase brief. All questions for you come in **one batch**. Nothing moves on until you accept the brief, even in auto mode, and any later requirement change comes back to you.
 2. **Design:** the designer shows screens where the phase has UI.
 3. **Threat review:** Security lists risks and required controls where the phase touches data, files, keys or AI.
 4. **Build:** the Engineer or AI FDE builds to the brief.
-5. **Verify:** QA tests every acceptance criterion and Security signs off. Failures go back to the builder.
-6. **Your sign-off:** you get a short summary and try it.
+5. **Verify:** QA tests every acceptance criterion and Security signs off. Failures go back to the builder. There's one full QA run and one narrow re-test, and a third round needs your approval.
+6. **Your sign-off:** you get a short summary and the merge checklist from `CONSTRAINTS.md`, then try it.
 7. **Push:** the phase is merged and pushed. The next phase starts only after your approval.
 
 ### GitHub workflow
@@ -255,6 +257,9 @@ Each phase is small, runs in **its own fresh session**, and ends in something yo
 - Sessions start **fresh, never forked**, so figures from this conversation don't carry forward.
 - Each phase ends with a short handoff note in `docs/phases/`.
 - A phase that's too big to finish cleanly gets split rather than stretched.
+- Each phase has a budget of half of one 5-hour limit, and stops to ask you when it gets there.
+- Agents hand over at a clean stopping point before 60% of their context is used.
+- Usage is recorded at the start and end of each phase.
 
 **Not in version 1:** live market prices, bank connections, budgets and forecasts, multiple users, data editing, saved chat history, hosting.
 

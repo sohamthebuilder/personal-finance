@@ -18,6 +18,8 @@ The export's column order and the exact balance-correction label are still unkno
 
 ## Working here
 
+- **Start here:** read `CLAUDE.md`, `CONSTRAINTS.md` and `docs/phases/README.md`. Personas are skills in `.claude/skills/` (D-016).
+
 - **Real data:** never open a spreadsheet outside this repo. All test data is generated and made up.
 - **Hook false alarms:** a shell command that names a spreadsheet type and an outside-looking path is refused, even if it reads nothing. Use the Edit tool, and don't work around the hook.
 - **Tests:** they run on `node --test`, and imports need `.ts` extensions. `next build` type-checks the tests too.
