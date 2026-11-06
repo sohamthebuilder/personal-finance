@@ -1,0 +1,5 @@
+#!/bin/sh
+# Last check before anything reaches GitHub. Catches what the commit hook can't
+# see, such as cherry-picks and commits made with --no-verify. Git lists what's
+# being pushed on standard input, so a commit pushed by hash is checked too.
+exec node "$(git rev-parse --show-toplevel)/scripts/data-guard.mjs" --push
