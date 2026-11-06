@@ -94,6 +94,12 @@ function checkShell(input, cwd) {
   return null;
 }
 
+// Exit code 2 blocks the tool call, so a crash here can't let a read through.
+process.on("uncaughtException", (error) => {
+  console.error(`Spreadsheet guard failed, so this is blocked: ${error.message}`);
+  process.exit(2);
+});
+
 let raw = "";
 process.stdin.setEncoding("utf8");
 process.stdin.on("data", (chunk) => (raw += chunk));

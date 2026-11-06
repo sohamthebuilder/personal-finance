@@ -1,0 +1,3 @@
+#!/bin/sh
+# Merges skip the pre-commit hook, so they get the same check here.
+exec node "$(git rev-parse --show-toplevel)/scripts/data-guard.mjs" --staged

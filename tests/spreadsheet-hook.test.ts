@@ -23,6 +23,13 @@ function run(toolName: string, toolInput: object, cwd = ROOT) {
 
 const shell = (command: string, cwd?: string) => run("Bash", { command }, cwd);
 
+describe("failure", () => {
+  it("blocks the tool call if the hook crashes", () => {
+    const result = spawnSync("node", [HOOK], { input: "not json", encoding: "utf8" });
+    assert.equal(result.status, 2);
+  });
+});
+
 describe("file tools", () => {
   it("blocks spreadsheets outside the repo", () => {
     assert.equal(run("Read", { file_path: join(OUTSIDE, "export.xlsx") }), "deny");

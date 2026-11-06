@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, describe, it } from "node:test";
@@ -62,6 +62,28 @@ describe("encrypted database", () => {
     assert.ok(!readFileSync(saltPath(path)).includes(PASSWORD));
     assert.equal(statSync(path).mode & 0o777, 0o600);
     assert.equal(statSync(saltPath(path)).mode & 0o777, 0o600);
+  });
+
+  it("refuses a wrong password on a new database with nothing written to it", async () => {
+    const fresh = join(folder, "fresh.db");
+    const db = await createEncryptedDb(fresh, PASSWORD);
+    db.close();
+    assert.ok(statSync(fresh).size > 0);
+    await assert.rejects(openEncryptedDb(fresh, "wrong"), WrongPasswordError);
+    (await openEncryptedDb(fresh, PASSWORD)).close();
+  });
+
+  it("refuses an empty file left by a crash, even with a salt", async () => {
+    const crashed = join(folder, "crashed.db");
+    writeFileSync(crashed, "");
+    writeFileSync(saltPath(crashed), Buffer.alloc(16, 1));
+    await assert.rejects(openEncryptedDb(crashed, PASSWORD), /empty or incomplete/);
+  });
+
+  it("won't create a database when opening a missing one", async () => {
+    const missing = join(folder, "missing.db");
+    await assert.rejects(openEncryptedDb(missing, PASSWORD), /ENOENT/);
+    assert.ok(!existsSync(missing));
   });
 
   it("won't overwrite an existing database", async () => {

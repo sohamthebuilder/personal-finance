@@ -92,3 +92,19 @@ One entry per decision that later phases need to know. Newest at the bottom. No 
 - **Phase:** 0
 - **Decision:** `next.config.ts` sets `agentRules: false`.
 - **Why:** `next dev` otherwise writes an `AGENTS.md` of instructions for AI agents into the repo. Agent instructions here should come only from the owner and the project docs.
+
+## D-014: Front gate for the production server
+
+- **Phase:** 0
+- **Decision:** `npm start` runs `server.ts`, a small Node server that checks every request before handing it to Next.js. `next start` is no longer used.
+- **Why:** QA found that Next.js answers some requests, such as trailing-slash redirects, before `src/proxy.ts` runs. Those requests skipped the Host and Origin checks and had no security headers. A front gate makes "every request is checked" true, and it's a second layer if a Next.js bug ever skips the proxy.
+- **Consequences:**
+  - The gate also refuses unused methods, anything but a plain path, and duplicate Host, Origin or `Sec-Fetch-Site` headers.
+  - Security checks that must always run, such as Phase 4's session check, belong in the gate or in each route, not in `src/proxy.ts` alone.
+  - `next dev` doesn't go through the gate.
+
+## D-015: Git hooks beyond pre-commit
+
+- **Phase:** 0
+- **Decision:** Add `pre-merge-commit` and `pre-push` hooks alongside `pre-commit`.
+- **Why:** Merges and cherry-picks skip `pre-commit`, and the pull request check only runs after the data has reached GitHub. `pre-push` is the last check that can stop it leaving the Mac.

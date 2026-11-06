@@ -5,6 +5,8 @@
 
 const DEFAULT_PORT = "3000";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+const ALLOWED_METHODS = new Set([...SAFE_METHODS, "POST", "PUT", "PATCH", "DELETE"]);
+const FALLBACK_CSP = "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 const ALLOWED_FETCH_SITES = new Set(["same-origin", "none"]);
 
 export function appPort(env: Record<string, string | undefined> = process.env): string {
@@ -53,6 +55,49 @@ export function checkRequest(request: RequestFacts, port: string): Decision {
   return { allowed: true };
 }
 
+export interface RawRequestFacts {
+  method: string;
+  url: string;
+  rawHeaders: string[];
+}
+
+function headerValues(rawHeaders: string[], name: string): string[] {
+  const values: string[] = [];
+  for (let index = 0; index + 1 < rawHeaders.length; index += 2) {
+    if (rawHeaders[index]?.toLowerCase() === name) values.push(rawHeaders[index + 1] ?? "");
+  }
+  return values;
+}
+
+/** The front gate. Adds the checks that need the request as it arrived on the wire. */
+export function checkRawRequest(request: RawRequestFacts, port: string): Decision {
+  if (!ALLOWED_METHODS.has(request.method)) {
+    return { allowed: false, reason: "method not allowed" };
+  }
+
+  // Only plain paths. This refuses absolute URLs, "*" and "//host" style paths.
+  if (!request.url.startsWith("/") || /^\/[/\\]/.test(request.url)) {
+    return { allowed: false, reason: "unexpected request target" };
+  }
+
+  const hosts = headerValues(request.rawHeaders, "host");
+  const origins = headerValues(request.rawHeaders, "origin");
+  const fetchSites = headerValues(request.rawHeaders, "sec-fetch-site");
+  if (hosts.length > 1 || origins.length > 1 || fetchSites.length > 1) {
+    return { allowed: false, reason: "duplicate header" };
+  }
+
+  return checkRequest(
+    {
+      method: request.method,
+      host: hosts[0] ?? null,
+      origin: origins[0] ?? null,
+      secFetchSite: fetchSites[0] ?? null,
+    },
+    port,
+  );
+}
+
 export function buildCsp(nonce: string, options: { dev: boolean; port: string }): string {
   const { dev, port } = options;
   // The development server needs eval and a websocket for hot reload.
@@ -87,4 +132,9 @@ export function securityHeaders(csp: string): Record<string, string> {
     "Cross-Origin-Opener-Policy": "same-origin",
     "Cross-Origin-Resource-Policy": "same-origin",
   };
+}
+
+/** Set by the front gate on every response. src/proxy.ts replaces the policy on pages. */
+export function baselineHeaders(): Record<string, string> {
+  return { ...securityHeaders(FALLBACK_CSP), "Cache-Control": "no-store" };
 }

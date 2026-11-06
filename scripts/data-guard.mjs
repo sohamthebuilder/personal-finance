@@ -2,24 +2,38 @@
 /**
  * Blocks spreadsheets, databases, secrets and oversized files from the repo.
  *
- *   --staged   checks what is about to be committed (pre-commit hook)
- *   --history  checks every file in every commit on every ref (pull request check)
+ *   --staged   checks what is about to be committed (pre-commit and pre-merge-commit hooks)
+ *   --history  checks every file in every commit on every ref (pre-push hook and pull request check)
  *
  * Output names the file and the reason only. It never prints file contents.
  * Exit codes: 0 clean, 1 blocked, 2 the guard itself failed (treated as blocked).
  */
 import { execFileSync } from "node:child_process";
 
-const BLOCKED_EXTENSIONS = new Set([
-  // Spreadsheets and tabular exports
-  "xlsx", "xls", "xlsm", "xlsb", "xltx", "xltm", "ods", "numbers", "csv", "tsv",
-  // Databases and their side files
-  "db", "db3", "db-wal", "db-shm", "db-journal",
-  "sqlite", "sqlite3", "sqlite-wal", "sqlite-shm", "sqlite-journal",
-  "s3db", "sl3", "salt",
-]);
+const BLOCKED_EXTENSION = new RegExp(
+  "^(?:" +
+    // Spreadsheets and tabular exports
+    "xlsx|xls|xlsm|xlsb|xlt|xltx|xltm|ods|fods|numbers|csv|tsv|" +
+    // Databases, their side files, and the encrypted database's salt
+    "(?:db|db3|sqlite|sqlite3|s3db|sl3)(?:-wal|-shm|-journal)?|mdb|accdb|salt" +
+    ")$",
+);
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
+
+/** File types that are never scanned for table-shaped text. */
+const SOURCE_EXTENSIONS = new Set(["ts", "tsx", "js", "mjs", "cjs", "json", "md", "yml", "yaml", "css", "html", "svg"]);
+
+const CONTENT_SIGNATURES = [
+  ["53514c69746520666f726d6174203300", "SQLite database content"],
+  ["377f0682", "SQLite side-file content"],
+  ["377f0683", "SQLite side-file content"],
+  ["d9d505f9", "SQLite side-file content"],
+  ["d0cf11e0a1b11ae1", "legacy Excel or Office content"],
+  // Modern spreadsheets are zip files, and no archive belongs in this repo.
+  ["504b0304", "spreadsheet or archive content"],
+  ["1f8b", "compressed content"],
+];
 
 const SECRET_PATTERNS = [
   ["Anthropic API key", /\bsk-ant-[A-Za-z0-9_-]{20,}/],
@@ -34,32 +48,54 @@ function git(args, options = {}) {
   return execFileSync("git", args, { maxBuffer: 1024 * 1024 * 1024, ...options });
 }
 
-/** Checks every dotted part of the name, so "export.xlsx.bak" is caught too. */
+/**
+ * Checks every folder in the path as well as the file name, because a Numbers
+ * document is a folder. Every dotted part counts, so "export.xlsx.bak" is caught.
+ */
 function pathProblem(path) {
-  const name = path.split("/").pop();
-  const lower = name.toLowerCase();
-  if (lower === ".env" || (lower.startsWith(".env.") && lower !== ".env.example")) {
+  const segments = path.toLowerCase().split("/");
+  const name = segments.at(-1);
+  if (name === ".env" || (name.startsWith(".env.") && name !== ".env.example")) {
     return "environment file";
   }
-  const parts = lower.split(".").slice(1);
-  const hit = parts.find((part) => BLOCKED_EXTENSIONS.has(part));
-  return hit ? `blocked file type (.${hit})` : null;
+  for (const segment of segments) {
+    const parts = segment.replace(/~+$/, "").split(".").slice(1);
+    const hit = parts.find((part) => BLOCKED_EXTENSION.test(part));
+    if (hit) return `blocked file type (.${hit})`;
+  }
+  return null;
 }
 
-function contentProblem(bytes) {
+/** Spots a CSV or TSV saved under another name: rows with the same number of fields. */
+function looksTabular(path, bytes) {
+  const name = path.toLowerCase().split("/").at(-1);
+  const extension = name.includes(".") ? name.split(".").at(-1) : "";
+  if (SOURCE_EXTENSIONS.has(extension) || bytes.includes(0)) return false;
+
+  const lines = bytes.toString("utf8").split(/\r?\n/).filter((line) => line.trim() !== "");
+  if (lines.length < 2) return false;
+
+  return [",", "\t", ";"].some((separator) => {
+    const counts = lines.map((line) => line.replace(/"[^"]*"/g, "").split(separator).length - 1);
+    const matching = counts.filter((count) => count === counts[0]).length;
+    return counts[0] >= 2 && matching >= lines.length * 0.9;
+  });
+}
+
+function contentProblem(path, bytes) {
   if (bytes.length > MAX_FILE_BYTES) return "file is larger than 5 MiB";
 
-  if (bytes.subarray(0, 16).toString("latin1") === "SQLite format 3\0") {
-    return "SQLite database content";
+  const start = bytes.subarray(0, 16).toString("hex");
+  for (const [signature, label] of CONTENT_SIGNATURES) {
+    if (start.startsWith(signature)) return label;
   }
-  if (bytes.subarray(0, 8).toString("hex") === "d0cf11e0a1b11ae1") {
-    return "legacy Excel or Office content";
+
+  const opening = bytes.subarray(0, 1024).toString("latin1");
+  if (opening.includes('progid="Excel.Sheet"') || opening.includes("office:spreadsheet")) {
+    return "Excel XML content";
   }
-  if (bytes.subarray(0, 4).toString("hex") === "504b0304") {
-    // Zip entry names are stored uncompressed, so they can be searched directly.
-    const markers = ["xl/workbook", "opendocument.spreadsheet", "Index/Document.iwa"];
-    if (markers.some((marker) => bytes.includes(marker))) return "spreadsheet content";
-  }
+
+  if (looksTabular(path, bytes)) return "table-shaped text, like a renamed CSV";
 
   const text = bytes.toString("latin1");
   for (const [label, pattern] of SECRET_PATTERNS) {
@@ -113,7 +149,7 @@ function check(entries) {
     }
     // Submodules have no blob to read.
     if (mode === "160000") continue;
-    const reason = contentProblem(git(["cat-file", "blob", sha]));
+    const reason = contentProblem(path, git(["cat-file", "blob", sha]));
     if (reason) problems.push({ path, reason });
   }
   return problems;

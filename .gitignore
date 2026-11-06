@@ -18,26 +18,42 @@ next-env.d.ts
 *.xls
 *.xlsm
 *.xlsb
+*.xlt
 *.xltx
 *.xltm
 *.ods
+*.fods
 *.numbers
 *.csv
 *.tsv
 
 # Databases and their side files
 *.db
-*.db3
 *.db-wal
 *.db-shm
 *.db-journal
+*.db3
+*.db3-wal
+*.db3-shm
+*.db3-journal
 *.sqlite
-*.sqlite3
 *.sqlite-wal
 *.sqlite-shm
 *.sqlite-journal
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.sqlite3-journal
 *.s3db
+*.s3db-wal
+*.s3db-shm
+*.s3db-journal
 *.sl3
+*.sl3-wal
+*.sl3-shm
+*.sl3-journal
+*.mdb
+*.accdb
 *.salt
 /data/
 

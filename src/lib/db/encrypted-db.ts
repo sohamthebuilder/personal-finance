@@ -1,5 +1,5 @@
 import { argon2, randomBytes } from "node:crypto";
-import { chmodSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import Database from "better-sqlite3-multiple-ciphers";
 
 type EncryptedDatabase = Database.Database;
@@ -69,6 +69,8 @@ export async function createEncryptedDb(databasePath: string, password: string):
 
   try {
     const db = openWithKey(databasePath, key);
+    // An empty file has nothing to check a key against, so write straight away.
+    db.pragma("user_version = 1");
     chmodSync(databasePath, 0o600);
     return db;
   } catch (error) {
@@ -79,6 +81,10 @@ export async function createEncryptedDb(databasePath: string, password: string):
 }
 
 export async function openEncryptedDb(databasePath: string, password: string): Promise<EncryptedDatabase> {
+  // An empty file would accept any password, so it must never be opened.
+  if (statSync(databasePath).size === 0) {
+    throw new Error("The database is empty or incomplete.");
+  }
   const key = await deriveKey(password, readFileSync(saltPath(databasePath)));
   try {
     return openWithKey(databasePath, key);

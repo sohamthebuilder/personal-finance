@@ -1,4 +1,4 @@
-# Money Manager export format
+# Export format
 
 This describes the shape of the export. It comes only from section 2 of `docs/PROJECT_BRIEF.md` and holds no values, account names or category names from any real file.
 
@@ -15,7 +15,7 @@ This describes the shape of the export. It comes only from section 2 of `docs/PR
 | `Tag` | Effectively empty, so the app ignores it |
 | `Description` | Effectively empty, so the app ignores it |
 
-The positions of these columns, and the names of the other columns, aren't recorded in the brief. Phase 1 needs them before it can finalise the sample file. See question 1 in `docs/phases/phase-0/brief.md`.
+The positions of these columns, and the names of the other columns, aren't recorded in the brief. Neither is the exact text of the Income / Expense Balance row type. Phase 1 needs all of these before it can finalise the sample file. See question 1 in `docs/phases/phase-0/brief.md`.
 
 ## Row types
 
@@ -24,7 +24,7 @@ The positions of these columns, and the names of the other columns, aren't recor
 | `Exp.` | Real spending |
 | `Income` | Salary and similar, mixed with market gain and loss rows |
 | `Transfer-In` / `Transfer-Out` | Moves between the owner's own accounts, always in matching pairs. Neither income nor spending |
-| `Income Balance` / `Expense Balance` | Manual "Modified Bal." corrections, not real income or spending |
+| Income / Expense Balance | Manual "Modified Bal." corrections, not real income or spending |
 
 Transfers pair up exactly and closed accounts come to zero, so balances and a net worth history can be rebuilt from the file.
 

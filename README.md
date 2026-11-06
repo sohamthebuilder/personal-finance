@@ -39,6 +39,6 @@ npm run guard
 ## Rules for this repo
 
 - Your real export and anything taken from it stay out of this project. Tests generate made-up data when they run.
-- The pre-commit hook and the pull request check block spreadsheets, databases and secrets.
+- The git hooks and the pull request check block spreadsheets, databases and secrets.
 - Each phase gets its own branch and pull request, merged only after your sign-off.
 - Decisions are logged in `docs/DECISIONS.md`.

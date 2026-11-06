@@ -1,7 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { appPort, buildCsp, checkRequest, securityHeaders } from "./lib/security/request-policy";
 
-/** Runs on every request, including static files. No matcher, so nothing is skipped. */
+/**
+ * Sets the per-request policy, and repeats the request checks for `next dev`.
+ * Next.js answers some requests before this runs, so in production server.ts
+ * is the first gate. Don't rely on this file alone for a security check.
+ */
 export function proxy(request: NextRequest): NextResponse {
   const port = appPort();
   const nonce = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString("base64");

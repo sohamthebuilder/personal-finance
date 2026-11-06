@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { appPort, buildCsp, checkRequest, securityHeaders } from "../src/lib/security/request-policy.ts";
+import {
+  appPort,
+  baselineHeaders,
+  buildCsp,
+  checkRawRequest,
+  checkRequest,
+  securityHeaders,
+} from "../src/lib/security/request-policy.ts";
 
 const PORT = "3000";
 const normal = { method: "GET", host: "127.0.0.1:3000", origin: null, secFetchSite: null };
@@ -37,6 +44,51 @@ describe("checkRequest", () => {
     for (const method of ["POST", "PUT", "PATCH", "DELETE", "post"]) {
       assert.equal(checkRequest({ ...normal, method }, PORT).allowed, false, method);
     }
+  });
+});
+
+describe("checkRawRequest", () => {
+  const raw = { method: "GET", url: "/", rawHeaders: ["Host", "127.0.0.1:3000"] };
+
+  it("allows a normal request", () => {
+    assert.equal(checkRawRequest(raw, PORT).allowed, true);
+    assert.equal(checkRawRequest({ ...raw, url: "/foo/" }, PORT).allowed, true);
+  });
+
+  it("refuses methods the app doesn't use", () => {
+    for (const method of ["TRACE", "CONNECT", "TRACK", ""]) {
+      assert.equal(checkRawRequest({ ...raw, method }, PORT).allowed, false, method);
+    }
+  });
+
+  it("refuses anything but a plain path", () => {
+    for (const url of ["http://evil.example/", "*", "//evil.example/", "/\\evil.example/", ""]) {
+      assert.equal(checkRawRequest({ ...raw, url }, PORT).allowed, false, url);
+    }
+  });
+
+  it("refuses duplicate headers, whichever comes first", () => {
+    for (const rawHeaders of [
+      ["Host", "127.0.0.1:3000", "Host", "evil.example"],
+      ["host", "evil.example", "HOST", "127.0.0.1:3000"],
+      ["Host", "127.0.0.1:3000", "Origin", "http://127.0.0.1:3000", "Origin", "http://evil.example"],
+    ]) {
+      assert.equal(checkRawRequest({ ...raw, rawHeaders }, PORT).allowed, false);
+    }
+  });
+
+  it("applies the normal request checks", () => {
+    assert.equal(checkRawRequest({ ...raw, rawHeaders: [] }, PORT).allowed, false);
+    assert.equal(checkRawRequest({ ...raw, rawHeaders: ["Host", "evil.example"] }, PORT).allowed, false);
+    assert.equal(checkRawRequest({ ...raw, method: "POST" }, PORT).allowed, false);
+  });
+});
+
+describe("baselineHeaders", () => {
+  it("has a policy that allows nothing, and no caching", () => {
+    const headers = baselineHeaders();
+    assert.match(headers["Content-Security-Policy"] as string, /^default-src 'none'/);
+    assert.equal(headers["Cache-Control"], "no-store");
   });
 });
 

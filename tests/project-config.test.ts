@@ -10,7 +10,7 @@ const packageJson = JSON.parse(read("package.json"));
 
 describe("package.json", () => {
   it("turns telemetry off wherever Next.js runs", () => {
-    const scripts = Object.entries<string>(packageJson.scripts).filter(([, command]) => /\bnext\b/.test(command));
+    const scripts = Object.entries<string>(packageJson.scripts).filter(([, command]) => /\bnext\b|server\.ts/.test(command));
     assert.ok(scripts.length >= 3);
     for (const [name, command] of scripts) {
       assert.match(command, /NEXT_TELEMETRY_DISABLED=1/, name);
@@ -18,10 +18,11 @@ describe("package.json", () => {
   });
 
   it("binds every server script to 127.0.0.1", () => {
-    for (const name of ["dev", "start"]) {
-      assert.match(packageJson.scripts[name], /-H 127\.0\.0\.1\b/, name);
-    }
+    assert.match(packageJson.scripts.dev, /-H 127\.0\.0\.1\b/);
+    assert.match(packageJson.scripts.start, /node server\.ts/);
+    assert.match(read("server.ts"), /const HOST = "127\.0\.0\.1";/);
   });
+
 
   it("pins every dependency to an exact version", () => {
     const all = { ...packageJson.dependencies, ...packageJson.devDependencies };

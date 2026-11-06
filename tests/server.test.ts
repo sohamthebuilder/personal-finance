@@ -51,6 +51,19 @@ function canConnect(host: string): Promise<boolean> {
   });
 }
 
+/** Sends bytes exactly as given, for requests no HTTP client will produce. */
+function rawRequest(text: string): Promise<string> {
+  return new Promise((resolvePromise, reject) => {
+    const socket = net.connect({ host: "127.0.0.1", port: PORT });
+    let reply = "";
+    socket.setEncoding("utf8");
+    socket.on("connect", () => socket.write(text));
+    socket.on("data", (chunk) => (reply += chunk));
+    socket.on("end", () => resolvePromise(reply));
+    socket.on("error", reject);
+  });
+}
+
 describe("production server", { timeout: 240_000 }, () => {
   let server: ChildProcess;
 
@@ -156,6 +169,53 @@ describe("production server", { timeout: 240_000 }, () => {
 
   it("refuses a cross-site browser request", async () => {
     assert.equal((await request("/", { headers: { "Sec-Fetch-Site": "cross-site" } })).status, 403);
+  });
+
+  it("rejects bad requests on paths Next.js would redirect before its proxy runs", async () => {
+    for (const path of ["/foo/", "/foo//bar"]) {
+      const attacks: Record<string, string>[] = [
+        { Host: "evil.example" },
+        { Origin: "http://evil.example" },
+        { "Sec-Fetch-Site": "cross-site" },
+      ];
+      for (const headers of attacks) {
+        assert.equal((await request(path, { headers })).status, 403, `${path} ${JSON.stringify(headers)}`);
+      }
+    }
+    assert.equal((await request("/foo/", { method: "POST" })).status, 403);
+    assert.equal((await request("//evil.example/")).status, 403);
+  });
+
+  it("sends the security headers on redirects", async () => {
+    const reply = await request("/foo/");
+    assert.equal(reply.status, 308);
+    assert.equal(reply.headers["x-content-type-options"], "nosniff");
+    assert.match(reply.headers["content-security-policy"] as string, /default-src 'none'/);
+    assert.equal(reply.headers["cache-control"], "no-store");
+  });
+
+  it("refuses TRACE and OPTIONS *, with headers", async () => {
+    const trace = await request("/", { method: "TRACE" });
+    assert.equal(trace.status, 403);
+    assert.equal(trace.headers["x-frame-options"], "DENY");
+
+    const star = await rawRequest(`OPTIONS * HTTP/1.1\r\nHost: ${HOST}\r\nConnection: close\r\n\r\n`);
+    assert.match(star, /^HTTP\/1\.1 403/);
+    assert.match(star, /x-frame-options: DENY/i);
+  });
+
+  it("refuses absolute-form requests, so it can't redirect off the Mac", async () => {
+    const reply = await rawRequest(`GET http://evil.example/ HTTP/1.1\r\nHost: ${HOST}\r\nConnection: close\r\n\r\n`);
+    assert.match(reply, /^HTTP\/1\.1 403/);
+    assert.doesNotMatch(reply, /location:/i);
+  });
+
+  it("refuses two Host headers, in either order", async () => {
+    for (const hosts of [`Host: ${HOST}\r\nHost: evil.example`, `Host: evil.example\r\nHost: ${HOST}`]) {
+      const reply = await rawRequest(`GET / HTTP/1.1\r\n${hosts}\r\nConnection: close\r\n\r\n`);
+      assert.match(reply, /^HTTP\/1\.1 403/);
+      assert.doesNotMatch(reply, /Personal Finance/);
+    }
   });
 
   it("accepts localhost and a same-origin POST past the guard", async () => {

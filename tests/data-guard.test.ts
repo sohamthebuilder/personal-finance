@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SCRATCH = mkdtempSync(join(tmpdir(), "data-guard-test-"));
+const HOOKS = ["pre-commit", "pre-merge-commit", "pre-push"];
 
 // Made-up test content. Tokens are assembled here so this file doesn't trip the guard itself.
 const FAKE_TOKEN_BODY = "A".repeat(40);
@@ -43,12 +44,14 @@ beforeEach(() => {
   mkdirSync(join(repo, "scripts"), { recursive: true });
   mkdirSync(join(repo, ".githooks"));
   copyFileSync(join(ROOT, "scripts/data-guard.mjs"), join(repo, "scripts/data-guard.mjs"));
-  copyFileSync(join(ROOT, ".githooks/pre-commit"), join(repo, ".githooks/pre-commit"));
+  for (const hook of HOOKS) {
+    copyFileSync(join(ROOT, ".githooks", hook), join(repo, ".githooks", hook));
+  }
   git("init", "-q", "-b", "main");
   git("config", "user.email", "test@example.com");
   git("config", "user.name", "Test");
   git("config", "core.hooksPath", ".githooks");
-  execFileSync("chmod", ["+x", ".githooks/pre-commit"], { cwd: repo });
+  execFileSync("chmod", ["+x", ...HOOKS.map((hook) => `.githooks/${hook}`)], { cwd: repo });
 });
 
 after(() => rmSync(SCRATCH, { recursive: true, force: true }));
@@ -64,7 +67,9 @@ describe("pre-commit hook", () => {
   for (const name of [
     "export.xlsx", "EXPORT.XLSX", "nested/folder/export.xls", "export.xlsm", "export.ods", "data.csv",
     "data.tsv", "finance.db", "finance.sqlite", "finance.sqlite3", "finance.db-wal", "finance.db.salt",
-    "export.xlsx.bak", "with space.csv",
+    "export.xlsx.bak", "with space.csv", "data.csv~", "export.xlt", "export.fods", "old.mdb", "old.accdb",
+    "finance.sqlite3-wal", "finance.sqlite3-shm", "finance.sqlite3-journal", "finance.db3-wal", "finance.s3db-journal",
+    "Budget.numbers/Index/Document.iwa", "exports.xlsx/inner.txt",
   ]) {
     it(`blocks ${name}, even with git add -f`, () => {
       write(name, "made up");
@@ -87,6 +92,10 @@ describe("pre-commit hook", () => {
     ["xlsx", Buffer.concat([ZIP_HEADER, Buffer.from("....xl/workbook.xml....")])],
     ["ods", Buffer.concat([ZIP_HEADER, Buffer.from("mimetypeapplication/vnd.oasis.opendocument.spreadsheet")])],
     ["legacy xls", Buffer.concat([OLE_HEADER, Buffer.alloc(100)])],
+    ["SQLite WAL", Buffer.concat([Buffer.from("377f0682", "hex"), Buffer.alloc(100)])],
+    ["SQLite journal", Buffer.concat([Buffer.from("d9d505f9", "hex"), Buffer.alloc(100)])],
+    ["gzipped file", Buffer.concat([Buffer.from("1f8b08", "hex"), Buffer.alloc(100)])],
+    ["Excel XML", Buffer.from('<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook>')],
   ];
   for (const [label, content] of renamed) {
     it(`blocks a ${label} renamed to .txt`, () => {
@@ -97,9 +106,31 @@ describe("pre-commit hook", () => {
     });
   }
 
-  it("allows an ordinary zip", () => {
+  it("blocks any zip, because a spreadsheet could be inside", () => {
     write("archive.bin", Buffer.concat([ZIP_HEADER, Buffer.from("readme.txt")]));
-    assert.equal(tryCommit("archive.bin").status, 0);
+    assert.notEqual(tryCommit("archive.bin").status, 0);
+  });
+
+  const tables: [string, string, string][] = [
+    ["a small CSV", "made-up.txt", "Date,Name,Amount\n2020-01-01,Fake,100\n"],
+    ["a renamed backup", "made-up.log", "a,b,c\n1,2,3\n4,5,6\n7,8,9\n"],
+    ["a TSV with no extension", "made-up", "a\tb\tc\n1\t2\t3\n"],
+    ["semicolons", "made-up.dat", "a;b;c\n1;2;3\n"],
+    ["quoted commas", "made-up.txt", 'a,b,c\n1,"two, more",3\n4,5,6\n'],
+  ];
+  for (const [label, name, content] of tables) {
+    it(`blocks table-shaped text: ${label}`, () => {
+      write(name, content);
+      const result = tryCommit(name);
+      assert.notEqual(result.status, 0);
+      assert.match(result.stderr, /table-shaped/);
+    });
+  }
+
+  it("doesn't mistake prose or source files for tables", () => {
+    write("prose.txt", "One line, with a comma, or two.\nAnother line with none.\nA third, shorter.\n");
+    write("list.ts", "const a = [1, 2, 3];\nconst b = [4, 5, 6];\n");
+    assert.equal(tryCommit("prose.txt", "list.ts").status, 0);
   });
 
   it("blocks files over 5 MiB", () => {
@@ -185,6 +216,45 @@ describe("history scan used by the pull request check", () => {
     git("add", "-f", "evil.db");
     git("commit", "-q", "--no-verify", "-m", "merge");
     assert.equal(history().status, 1);
+  });
+});
+
+describe("merge and push hooks", () => {
+  it("blocks a merge that brings in a blocked file", () => {
+    write("notes.md", "hello");
+    tryCommit("notes.md");
+    git("checkout", "-q", "-b", "other");
+    write("data.csv", "made up");
+    git("add", "-f", "data.csv");
+    git("commit", "-q", "--no-verify", "-m", "add");
+    git("checkout", "-q", "main");
+    write("main.md", "main");
+    tryCommit("main.md");
+    const result = spawnSync("git", ["merge", "--no-ff", "--no-edit", "other"], { cwd: repo, encoding: "utf8" });
+    assert.notEqual(result.status, 0);
+  });
+
+  it("stops a push when a bad commit got past the commit hook", () => {
+    const remote = `${repo}-remote.git`;
+    execFileSync("git", ["init", "-q", "--bare", remote]);
+    git("remote", "add", "origin", remote);
+    write("export.xlsx", "made up");
+    git("add", "-f", "export.xlsx");
+    git("commit", "-q", "--no-verify", "-m", "add");
+
+    const result = spawnSync("git", ["push", "origin", "main"], { cwd: repo, encoding: "utf8" });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /Data guard blocked/);
+    assert.equal(execFileSync("git", ["rev-list", "--all", "--count"], { cwd: remote }).toString().trim(), "0");
+  });
+
+  it("allows a clean push", () => {
+    const remote = `${repo}-remote.git`;
+    execFileSync("git", ["init", "-q", "--bare", remote]);
+    git("remote", "add", "origin", remote);
+    write("notes.md", "hello");
+    tryCommit("notes.md");
+    assert.equal(spawnSync("git", ["push", "origin", "main"], { cwd: repo }).status, 0);
   });
 });
 
