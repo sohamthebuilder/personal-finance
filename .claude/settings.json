@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(//**/*.xlsx)",
+      "Read(//**/*.xls)",
+      "Read(//**/*.xlsm)",
+      "Read(//**/*.xlsb)",
+      "Read(//**/*.xltx)",
+      "Read(//**/*.xltm)",
+      "Read(//**/*.ods)",
+      "Read(//**/*.numbers)",
+      "Read(//**/*.csv)",
+      "Read(//**/*.tsv)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-spreadsheet-reads.mjs\"",
+            "timeout": 10,
+            "onFailure": "block"
+          }
+        ]
+      }
+    ]
+  }
+}

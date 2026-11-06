@@ -1,0 +1,3 @@
+#!/bin/sh
+# Blocks spreadsheets, databases and secrets. If this can't run, the commit fails.
+exec node "$(git rev-parse --show-toplevel)/scripts/data-guard.mjs" --staged

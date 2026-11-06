@@ -1,0 +1,45 @@
+# Dependencies and build output
+node_modules/
+.next/
+out/
+coverage/
+next-env.d.ts
+*.tsbuildinfo
+
+# Local secrets and settings
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+
+# Real data must never enter this repo.
+# Spreadsheets and tabular exports
+*.xlsx
+*.xls
+*.xlsm
+*.xlsb
+*.xltx
+*.xltm
+*.ods
+*.numbers
+*.csv
+*.tsv
+
+# Databases and their side files
+*.db
+*.db3
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite-journal
+*.s3db
+*.sl3
+*.salt
+/data/
+
+# macOS
+.DS_Store
