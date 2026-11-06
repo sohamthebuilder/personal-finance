@@ -84,5 +84,5 @@ No product features are built in this phase. There is no login, import, screen o
 None of these block Phase 0. Each has a working default, and all three are asked together at sign-off.
 
 1. **Column order.** Section 2 of the brief gives the column count and some names, but not the order, and Phase 1 needs the order. It also needs the exact text the export uses for the balance correction row type. Could you paste only the header row and that one label, with no data rows? Default: Phase 1 can't finalise the sample layout without them.
-2. **Node version.** Node 25 no longer gets updates. Should the project stay on Node 25 or move to a supported version? Default: stay on 25.8.0 for now, because that's what this phase was asked to prove.
+2. **Node version.** Node 25 no longer gets updates. Should the project stay on Node 25 or move to a supported version? Default: stay on 25.8.0 for now, because that's what this phase was asked to prove. Security adds that 25.8.0 misses nine CVE fixes in 25.8.2, and requires a move to line 24 or 26 before Phase 4.
 3. **Protecting `main`.** GitHub's free plan can't enforce checks or block direct pushes on a private repo. Is that acceptable, or do you want GitHub Pro? Default: stay on the free plan and rely on the local hook, the pull request check and the rule that only approved work is merged.

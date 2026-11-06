@@ -38,7 +38,8 @@ One entry per decision that later phases need to know. Newest at the bottom. No 
 - **Phase:** 0
 - **Decision:** Pin Node 25.8.0 in `.nvmrc` for now.
 - **Why:** This phase was asked to prove encryption on the Mac's installed version.
-- **Risk:** Node 25 no longer gets releases, so it won't receive security fixes. Supported lines are 24 and 26. The owner is asked about moving at Phase 0 sign-off.
+- **Risk:** Node 25 no longer gets releases, so it won't receive security fixes. Supported lines are 24 and 26. 25.8.0 also misses 25.8.2, a security release with nine CVE fixes. Most of those cover TLS, HTTP/2 and the permission model, which this app doesn't use, and the app holds no real data yet, so the risk today is small. It grows with every unpatched month.
+- **Follow-up:** Security requires a move to line 24 or 26 before Phase 4, with the driver and `crypto.argon2` retested there. The owner is asked about timing at Phase 0 sign-off.
 
 ## D-006: Driver types
 

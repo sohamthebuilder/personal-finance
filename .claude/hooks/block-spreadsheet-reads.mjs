@@ -13,7 +13,10 @@ import { dirname, isAbsolute, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REPO = realpathSync(join(dirname(fileURLToPath(import.meta.url)), "..", ".."));
-const SPREADSHEET = /\.(xlsx|xls|xlsm|xlsb|xltx|xltm|ods|numbers|csv|tsv)(?![a-z0-9])/i;
+const TYPES = "xlsx|xls|xlsm|xlsb|xlt|xltx|xltm|ods|fods|numbers|csv|tsv";
+const SPREADSHEET = new RegExp(`\\.(?:${TYPES})(?![a-z0-9])`, "i");
+// Search patterns can also list types in braces, as in "*.{txt,xlsx}".
+const SPREADSHEET_SEARCH = new RegExp(`[.{,](?:${TYPES})(?![a-z0-9])`, "i");
 
 function deny(reason) {
   process.stdout.write(
@@ -46,21 +49,31 @@ function isInsideRepo(path) {
   return path === REPO || path.startsWith(REPO + sep);
 }
 
+/** A pattern can leave the repo by itself, whatever folder the search starts in. */
+function patternLeavesRepo(pattern, base) {
+  if (/(^|[/{,])\.\.([/},]|$)/.test(pattern)) return true;
+  return pattern.split(/[{},]/).some((piece) => {
+    const fixedStart = piece.split(/[*?[]/)[0];
+    return !isInsideRepo(realLocation(fixedStart || ".", base));
+  });
+}
+
 function checkFileTool(input, cwd) {
   const targets = [input.file_path, input.path].filter(Boolean);
-  const pattern = [input.pattern, input.glob].filter(Boolean).join(" ");
 
   for (const target of targets) {
     const location = realLocation(target, cwd);
     if (SPREADSHEET.test(location) && !isInsideRepo(location)) {
       return "This spreadsheet is outside the repo.";
     }
-    if (SPREADSHEET.test(pattern) && !isInsideRepo(location)) {
+  }
+
+  const bases = (targets.length > 0 ? targets : [cwd]).map((target) => realLocation(target, cwd));
+  for (const pattern of [input.pattern, input.glob].filter(Boolean)) {
+    if (!SPREADSHEET_SEARCH.test(pattern)) continue;
+    if (bases.some((base) => !isInsideRepo(base) || patternLeavesRepo(pattern, base))) {
       return "This search looks for spreadsheets outside the repo.";
     }
-  }
-  if (targets.length === 0 && SPREADSHEET.test(pattern) && !isInsideRepo(realLocation(cwd, cwd))) {
-    return "This search looks for spreadsheets outside the repo.";
   }
   return null;
 }

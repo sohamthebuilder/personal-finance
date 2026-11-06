@@ -69,7 +69,7 @@ describe(".claude/settings.json", () => {
   const settings = JSON.parse(read(".claude/settings.json"));
 
   it("denies reading every spreadsheet type", () => {
-    for (const extension of ["xlsx", "xls", "xlsm", "xlsb", "ods", "numbers", "csv", "tsv"]) {
+    for (const extension of ["xlsx", "xls", "xlsm", "xlsb", "xlt", "xltx", "xltm", "ods", "fods", "numbers", "csv", "tsv"]) {
       assert.ok(settings.permissions.deny.includes(`Read(//**/*.${extension})`), extension);
     }
   });

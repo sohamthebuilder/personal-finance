@@ -17,6 +17,14 @@ This isn't a full pass yet, because the phase brief needs every criterion to pas
 
 **One judgment call for review.** AC-10 passes, but an XML spreadsheet with a UTF-8 byte-order mark in front of it still commits when renamed. I treated that as covered by the accepted "junk bytes in front" limit, because neither Excel nor LibreOffice normally writes one to these formats. If you read that limit more narrowly, AC-10 and AC-11 would be a low-severity Fail. It's a one-line fix.
 
+## Updates after this run
+
+Added by the engineer. These aren't QA results.
+
+- The UTF-8 byte-order mark case in the judgment call above is fixed, and a test covers it.
+- `handoff.md` and the security sign-off now exist, so AC-19's files are all there. AC-12 is still open.
+- Security's conditions changed the spreadsheet hook and deny rules after this run. The repo's tests cover those changes. QA didn't rerun them.
+
 ## Results
 
 | ID | Result | Evidence |

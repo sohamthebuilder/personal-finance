@@ -52,6 +52,37 @@ describe("file tools", () => {
     assert.equal(run("Glob", { pattern: "**/*.xlsx" }, OUTSIDE), "deny");
   });
 
+  it("blocks a search whose pattern leaves the repo by itself", () => {
+    for (const pattern of [
+      join(OUTSIDE, "**/*.xlsx"),
+      "~/Desktop/*.csv",
+      "../**/*.xlsx",
+      "src/../../*.xlsx",
+      `{${OUTSIDE},${homedir()}}/*.csv`,
+    ]) {
+      assert.equal(run("Glob", { pattern }), "deny", pattern);
+      assert.equal(run("Glob", { pattern, path: ROOT }), "deny", pattern);
+    }
+  });
+
+  it("recognises spreadsheet types listed in braces", () => {
+    assert.equal(run("Glob", { pattern: "*.{txt,xlsx}" }, OUTSIDE), "deny");
+    assert.equal(run("Glob", { pattern: "*.{csv,txt}", path: homedir() }), "deny");
+    assert.equal(run("Glob", { pattern: "*.{txt,md}", path: homedir() }), "allowed");
+  });
+
+  it("allows spreadsheet searches that stay inside the repo", () => {
+    assert.equal(run("Glob", { pattern: "**/*.xlsx" }), "allowed");
+    assert.equal(run("Glob", { pattern: join(ROOT, "**/*.xlsx") }), "allowed");
+    assert.equal(run("Grep", { pattern: "x", glob: "*.{csv,xlsx}" }), "allowed");
+  });
+
+  it("covers every spreadsheet type the data guard blocks", () => {
+    for (const name of ["old.xlt", "flat.fods", "template.xltx", "sheet.ods"]) {
+      assert.equal(run("Read", { file_path: join(OUTSIDE, name) }), "deny", name);
+    }
+  });
+
   it("allows other files", () => {
     assert.equal(run("Read", { file_path: join(ROOT, "README.md") }), "allowed");
     assert.equal(run("Read", { file_path: join(OUTSIDE, "notes.md") }), "allowed");

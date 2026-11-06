@@ -5,9 +5,11 @@
       "Read(//**/*.xls)",
       "Read(//**/*.xlsm)",
       "Read(//**/*.xlsb)",
+      "Read(//**/*.xlt)",
       "Read(//**/*.xltx)",
       "Read(//**/*.xltm)",
       "Read(//**/*.ods)",
+      "Read(//**/*.fods)",
       "Read(//**/*.numbers)",
       "Read(//**/*.csv)",
       "Read(//**/*.tsv)"
