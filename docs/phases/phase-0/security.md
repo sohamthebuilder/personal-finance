@@ -197,6 +197,7 @@ Added by the engineer. The sign-off above is unchanged and covers `8e5d90a` only
 - **Also fixed:** the hook didn't recognise types listed in braces, such as `*.{txt,xlsx}`. Nobody had reported this. It came up while fixing S-5.
 - **S-8, S-9 and S-10 addressed.** Known limits and C13 are updated.
 - **S-1 recorded** in D-005 and in the owner's Node question.
-- **Conditions 1 and 2 are still open.** Only the owner can meet them.
+- **Condition 2 met on 2026-11-06, after the merge.** The owner updated the Homebrew `claude` to 2.1.311 and AC-12 passed with it. Security's rule was to do this before merging, and it was done afterwards. No real data was in the repo at any point.
+- **Condition 1 was reported done by the owner.** No output from it was recorded, so there's no evidence here beyond their word.
 
 **Security recheck of `c4c3f59`:** S-5, S-6 and S-8 are closed, and the change weakens nothing. This was a read-only review of the diff, with no real search run outside the repo. False alarms rise slightly, which fails safe. It doesn't change conditions 1 and 2.

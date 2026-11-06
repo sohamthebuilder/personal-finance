@@ -5,12 +5,12 @@ For the Phase 1 session. Read `docs/PROJECT_BRIEF.md`, `docs/DECISIONS.md` and t
 ## State
 
 - The empty app runs on `127.0.0.1:3000`, and encrypted storage is proven on Node 25.8.0.
-- All Phase 0 work is in pull request 1. Check that the owner has signed off and it's merged before you start.
+- All Phase 0 work is in pull request 1, which is merged.
 
 ## Do first
 
-1. Confirm AC-12 if it's still open: use the Read tool on `made-up-guard-test.xlsx` in the repo root. A refusal from permission settings is a pass, and "file does not exist" is a fail.
-2. Check with the owner that Security's conditions 1 and 2 were met.
+1. AC-12 is closed: it passed in a fresh session on `claude` 2.1.311 (see `test-report.md`).
+2. Security's condition 2 is met. Condition 1 was reported done by the owner, with no recorded output.
 
 ## What Phase 1 needs from the owner
 

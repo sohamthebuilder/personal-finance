@@ -24,6 +24,7 @@ Added by the engineer. These aren't QA results.
 - The UTF-8 byte-order mark case in the judgment call above is fixed, and a test covers it.
 - `handoff.md` and the security sign-off now exist, so AC-19's files are all there. AC-12 is still open.
 - Security's conditions changed the spreadsheet hook and deny rules after this run. The repo's tests cover those changes. QA didn't rerun them.
+- **AC-12 passed on 2026-11-06, after the merge.** The owner updated `claude` to 2.1.311, logged in and ran the fresh-session test. The Read tool was refused by permission settings before it read anything. This covers the Read tool only. The hook's shell command checks rest on the repo's tests.
 
 ## Results
 
