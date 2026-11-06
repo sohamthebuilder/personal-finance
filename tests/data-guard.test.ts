@@ -96,13 +96,19 @@ describe("pre-commit hook", () => {
     ["SQLite journal", Buffer.concat([Buffer.from("d9d505f9", "hex"), Buffer.alloc(100)])],
     ["gzipped file", Buffer.concat([Buffer.from("1f8b08", "hex"), Buffer.alloc(100)])],
     ["Excel XML", Buffer.from('<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook>')],
+    ["FODS with its marker deep in the file", Buffer.from(`<?xml version="1.0"?><doc>${" ".repeat(5000)}<office:spreadsheet/></doc>`)],
+    ["UTF-16 table", Buffer.concat([Buffer.from("fffe", "hex"), Buffer.from("a\tb\tc\n1\t2\t3\n", "utf16le")])],
+    ["Access database", Buffer.concat([Buffer.alloc(4), Buffer.from("Standard Jet DB"), Buffer.alloc(100)])],
+    ["bzip2 file", Buffer.concat([Buffer.from("425a6839", "hex"), Buffer.alloc(100)])],
+    ["7z archive", Buffer.concat([Buffer.from("377abcaf271c", "hex"), Buffer.alloc(100)])],
+    ["tar archive", Buffer.concat([Buffer.alloc(257), Buffer.from("ustar"), Buffer.alloc(100)])],
   ];
   for (const [label, content] of renamed) {
     it(`blocks a ${label} renamed to .txt`, () => {
       write("harmless.txt", content);
       const result = tryCommit("harmless.txt");
       assert.notEqual(result.status, 0);
-      assert.match(result.stderr, /content/);
+      assert.match(result.stderr, /Data guard blocked/);
     });
   }
 
@@ -117,6 +123,9 @@ describe("pre-commit hook", () => {
     ["a TSV with no extension", "made-up", "a\tb\tc\n1\t2\t3\n"],
     ["semicolons", "made-up.dat", "a;b;c\n1;2;3\n"],
     ["quoted commas", "made-up.txt", 'a,b,c\n1,"two, more",3\n4,5,6\n'],
+    ["a title line above the table", "made-up.txt", "Fake Report\nDate,Name,Amount\n2020-01-01,Fake,100\n2020-01-02,Fake,200\n"],
+    ["old Mac line endings", "made-up.txt", "a,b,c\r1,2,3\r4,5,6\r"],
+    ["pipes", "made-up.txt", "a|b|c\n1|2|3\n"],
   ];
   for (const [label, name, content] of tables) {
     it(`blocks table-shaped text: ${label}`, () => {
@@ -246,6 +255,23 @@ describe("merge and push hooks", () => {
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /Data guard blocked/);
     assert.equal(execFileSync("git", ["rev-list", "--all", "--count"], { cwd: remote }).toString().trim(), "0");
+  });
+
+  it("stops a push by hash of a bad commit that no branch points to", () => {
+    const remote = `${repo}-remote.git`;
+    execFileSync("git", ["init", "-q", "--bare", remote]);
+    git("remote", "add", "origin", remote);
+    write("notes.md", "hello");
+    tryCommit("notes.md");
+    write("data.csv", "made up");
+    git("add", "-f", "data.csv");
+    git("commit", "-q", "--no-verify", "-m", "add");
+    const hash = git("rev-parse", "HEAD").toString().trim();
+    git("reset", "-q", "--hard", "HEAD~1");
+
+    const result = spawnSync("git", ["push", "origin", `${hash}:refs/heads/hidden`], { cwd: repo, encoding: "utf8" });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /Data guard blocked/);
   });
 
   it("allows a clean push", () => {

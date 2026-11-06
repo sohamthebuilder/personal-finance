@@ -3,12 +3,14 @@
  * Blocks spreadsheets, databases, secrets and oversized files from the repo.
  *
  *   --staged   checks what is about to be committed (pre-commit and pre-merge-commit hooks)
- *   --history  checks every file in every commit on every ref (pre-push hook and pull request check)
+ *   --history  checks every file in every commit on every ref (pull request check)
+ *   --push     does the same, plus the commits being pushed (pre-push hook)
  *
  * Output names the file and the reason only. It never prints file contents.
  * Exit codes: 0 clean, 1 blocked, 2 the guard itself failed (treated as blocked).
  */
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 const BLOCKED_EXTENSION = new RegExp(
   "^(?:" +
@@ -22,7 +24,9 @@ const BLOCKED_EXTENSION = new RegExp(
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
 /** File types that are never scanned for table-shaped text. */
-const SOURCE_EXTENSIONS = new Set(["ts", "tsx", "js", "mjs", "cjs", "json", "md", "yml", "yaml", "css", "html", "svg"]);
+const SOURCE_EXTENSIONS = new Set([
+  "ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs", "json", "md", "yml", "yaml", "css", "html", "svg",
+]);
 
 const CONTENT_SIGNATURES = [
   ["53514c69746520666f726d6174203300", "SQLite database content"],
@@ -30,9 +34,17 @@ const CONTENT_SIGNATURES = [
   ["377f0683", "SQLite side-file content"],
   ["d9d505f9", "SQLite side-file content"],
   ["d0cf11e0a1b11ae1", "legacy Excel or Office content"],
+  // Excel's "Unicode Text" save is UTF-16, and nothing in this repo needs it.
+  ["fffe", "UTF-16 text"],
+  ["feff", "UTF-16 text"],
   // Modern spreadsheets are zip files, and no archive belongs in this repo.
   ["504b0304", "spreadsheet or archive content"],
   ["1f8b", "compressed content"],
+  ["425a68", "compressed content"],
+  ["fd377a585a00", "compressed content"],
+  ["28b52ffd", "compressed content"],
+  ["377abcaf271c", "archive content"],
+  ["526172211a07", "archive content"],
 ];
 
 const SECRET_PATTERNS = [
@@ -72,13 +84,18 @@ function looksTabular(path, bytes) {
   const extension = name.includes(".") ? name.split(".").at(-1) : "";
   if (SOURCE_EXTENSIONS.has(extension) || bytes.includes(0)) return false;
 
-  const lines = bytes.toString("utf8").split(/\r?\n/).filter((line) => line.trim() !== "");
+  const lines = bytes.toString("utf8").split(/\r\n|\r|\n/).filter((line) => line.trim() !== "");
   if (lines.length < 2) return false;
 
-  return [",", "\t", ";"].some((separator) => {
-    const counts = lines.map((line) => line.replace(/"[^"]*"/g, "").split(separator).length - 1);
-    const matching = counts.filter((count) => count === counts[0]).length;
-    return counts[0] >= 2 && matching >= lines.length * 0.9;
+  return [",", "\t", ";", "|"].some((separator) => {
+    const tally = new Map();
+    for (const line of lines) {
+      const count = line.replace(/"[^"]*"/g, "").split(separator).length - 1;
+      if (count >= 2) tally.set(count, (tally.get(count) ?? 0) + 1);
+    }
+    // Uses the most common row length, so a title line above the table doesn't hide it.
+    const matching = Math.max(0, ...tally.values());
+    return matching >= 2 && matching >= lines.length * 0.6;
   });
 }
 
@@ -90,16 +107,21 @@ function contentProblem(path, bytes) {
     if (start.startsWith(signature)) return label;
   }
 
-  const opening = bytes.subarray(0, 1024).toString("latin1");
-  if (opening.includes('progid="Excel.Sheet"') || opening.includes("office:spreadsheet")) {
-    return "Excel XML content";
+  if (/^Standard (?:Jet|ACE) DB/.test(bytes.subarray(4, 24).toString("latin1"))) {
+    return "Access database content";
+  }
+  if (bytes.subarray(257, 262).toString("latin1") === "ustar") return "archive content";
+
+  // XML spreadsheets can carry their marker deep in the file.
+  const asText = bytes.toString("latin1");
+  if (asText.trimStart().startsWith("<") && /progid="Excel\.Sheet"|office:spreadsheet|opendocument\.spreadsheet/.test(asText)) {
+    return "XML spreadsheet content";
   }
 
   if (looksTabular(path, bytes)) return "table-shaped text, like a renamed CSV";
 
-  const text = bytes.toString("latin1");
   for (const [label, pattern] of SECRET_PATTERNS) {
-    if (pattern.test(text)) return `possible ${label}`;
+    if (pattern.test(asText)) return `possible ${label}`;
   }
   return null;
 }
@@ -121,8 +143,16 @@ function stagedEntries() {
   return entries;
 }
 
-function historyEntries() {
-  const commits = git(["rev-list", "--all"]).toString("utf8").split("\n").filter(Boolean);
+/** Git gives pre-push one line per ref: local ref, local hash, remote ref, remote hash. */
+function pushedCommits() {
+  return readFileSync(0, "utf8")
+    .split("\n")
+    .map((line) => line.split(" ")[1])
+    .filter((sha) => sha && !/^0+$/.test(sha));
+}
+
+function historyEntries(extraCommits = []) {
+  const commits = git(["rev-list", "--all", ...extraCommits]).toString("utf8").split("\n").filter(Boolean);
   const entries = new Map();
   for (const commit of commits) {
     const fields = git([
@@ -157,12 +187,13 @@ function check(entries) {
 
 function main() {
   const mode = process.argv[2];
-  if (mode !== "--staged" && mode !== "--history") {
-    console.error("Usage: data-guard.mjs --staged | --history");
+  if (!["--staged", "--history", "--push"].includes(mode)) {
+    console.error("Usage: data-guard.mjs --staged | --history | --push");
     return 2;
   }
 
-  const entries = mode === "--staged" ? stagedEntries() : historyEntries();
+  const entries =
+    mode === "--staged" ? stagedEntries() : historyEntries(mode === "--push" ? pushedCommits() : []);
   const problems = check(entries);
 
   if (problems.length === 0) {

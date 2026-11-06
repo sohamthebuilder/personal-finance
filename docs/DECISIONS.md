@@ -14,7 +14,10 @@ One entry per decision that later phases need to know. Newest at the bottom. No 
 - **Phase:** 0
 - **Decision:** Use Argon2id through Node's built-in `crypto.argon2`, with 64 MiB memory, 3 passes, parallelism 4, a 32-byte key and a random 16-byte salt per database. The derived key goes straight to the driver as a raw key.
 - **Why:** It's the brief's preferred method, adds no dependency, and exceeds OWASP's minimum settings. It takes about 0.1 seconds on this Mac.
-- **Consequence:** Node 24.7 or newer is required. The salt isn't secret and is stored beside the database, so losing it makes the database unreadable.
+- **Consequences:**
+  - Node 24.7 or newer is required.
+  - The salt isn't secret and is stored beside the database, so losing it makes the database unreadable.
+  - A fixed application ID is stored inside the encrypted header and checked on open, because an empty or cut-down file would otherwise open with any password.
 
 ## D-003: Test runner
 
@@ -100,6 +103,7 @@ One entry per decision that later phases need to know. Newest at the bottom. No 
 - **Why:** QA found that Next.js answers some requests, such as trailing-slash redirects, before `src/proxy.ts` runs. Those requests skipped the Host and Origin checks and had no security headers. A front gate makes "every request is checked" true, and it's a second layer if a Next.js bug ever skips the proxy.
 - **Consequences:**
   - The gate also refuses unused methods, anything but a plain path, and duplicate Host, Origin or `Sec-Fetch-Site` headers.
+  - Next.js gets a stand-in `httpServer`, so it can't attach an `upgrade` listener that skips the gate. WebSockets therefore don't work in production. A later phase that needs them must add its own checked `upgrade` handler.
   - Security checks that must always run, such as Phase 4's session check, belong in the gate or in each route, not in `src/proxy.ts` alone.
   - `next dev` doesn't go through the gate.
 
@@ -107,4 +111,5 @@ One entry per decision that later phases need to know. Newest at the bottom. No 
 
 - **Phase:** 0
 - **Decision:** Add `pre-merge-commit` and `pre-push` hooks alongside `pre-commit`.
-- **Why:** Merges and cherry-picks skip `pre-commit`, and the pull request check only runs after the data has reached GitHub. `pre-push` is the last check that can stop it leaving the Mac.
+- **Why:** Merges and cherry-picks skip `pre-commit`, and the pull request check only runs after the data has reached GitHub. `pre-push` is the last check that can stop it leaving the Mac. It scans all refs plus the commits being pushed, so a commit pushed by hash is covered.
+- **Consequence:** While a bad commit exists on any local branch, every push is refused, even of clean branches. That errs on the safe side.

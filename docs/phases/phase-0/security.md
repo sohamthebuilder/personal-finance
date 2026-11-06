@@ -25,10 +25,14 @@ This phase handles no real data, so the risks are about the foundations: anythin
 ## Known limits
 
 - **`main` isn't enforced.** The free plan can't require checks or block direct pushes on a private repo, so C3 reports a failure but can't stop a merge. The owner's sign-off is the real gate.
-- **The git hooks can be skipped.** `--no-verify` skips them, and a fresh clone has none until setup runs. Cherry-picks skip the commit hook, but the pre-push hook catches them. C3 is the backstop, though it runs after the push, so data would already be on GitHub by then.
+- **The git hooks can be skipped.** `--no-verify` skips them, and a fresh clone has none until setup runs. Cherry-picks, rebases and fast-forward merges skip the commit hook, but the pre-push hook catches them. C3 is the backstop, though it runs after the push, so data would already be on GitHub by then.
 - **C6 and C7 stop mistakes, not a determined bypass.** They aren't a sandbox. A script that builds a file name at runtime gets past them. So do shell commands that reach a spreadsheet without naming its type, such as `cat folder/*`, `cp -r folder .` or `grep -r word folder`. Only four tools are covered. Agents are also told not to touch these files, and that instruction is part of the control.
 - **The hook has false alarms.** A shell command that names a spreadsheet type and also contains something that looks like an outside path is refused, even if it reads nothing. Use the Edit tool instead of working around it.
-- **Table-shaped text is found by a heuristic.** C4 can miss a renamed CSV with very uneven rows, or only one field separator per row. It doesn't scan source and document types such as `.md`, `.ts` and `.json`, so a table pasted into one of those isn't caught.
+- **Content detection has accepted gaps.** No check can catch every disguise, so these are accepted for a guard against mistakes:
+  - Table-shaped text is found by a heuristic. It misses two-column CSVs, very uneven rows, colon-separated text and UTF-16 with no byte-order mark.
+  - It doesn't scan source and document types such as `.md`, `.ts` and `.json`, so a table pasted into one of those isn't caught.
+  - A spreadsheet that has been base64-encoded, or has junk bytes in front of it, isn't recognised.
+  - A false block is possible on a short, regular text file. That fails safely, and the file can be renamed to a source type if it's genuine.
 - **Encrypted databases can't be recognised by content,** because they look like random bytes. C4 can't flag one with an unusual extension, so the guard also limits file size and the database should live outside the repo.
 - **The development server is looser.** It uses `next dev` without the front gate, and it needs a weaker policy to work. `src/proxy.ts` still checks requests there, but Next.js can answer some before it runs. The owner runs the production build, which has the gate and the strict policy.
 - **Node answers some malformed requests itself.** Its 400 responses carry no security headers. They hold no content and are sent before any app code runs.

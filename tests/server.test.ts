@@ -210,6 +210,21 @@ describe("production server", { timeout: 240_000 }, () => {
     assert.doesNotMatch(reply, /location:/i);
   });
 
+  it("sends upgrade requests through the gate, even after a normal request", async () => {
+    // Next.js would attach its own upgrade listener on the first allowed request.
+    assert.equal((await request("/")).status, 200);
+
+    const upgrade = (headers: string) =>
+      rawRequest(
+        `GET / HTTP/1.1\r\n${headers}\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n` +
+          "Sec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n\r\n",
+      );
+
+    assert.match(await upgrade("Host: evil.example"), /^HTTP\/1\.1 403/);
+    assert.match(await upgrade(`Host: ${HOST}\r\nOrigin: http://evil.example`), /^HTTP\/1\.1 403/);
+    assert.doesNotMatch(await upgrade(`Host: ${HOST}`), /^HTTP\/1\.1 101/);
+  });
+
   it("refuses two Host headers, in either order", async () => {
     for (const hosts of [`Host: ${HOST}\r\nHost: evil.example`, `Host: evil.example\r\nHost: ${HOST}`]) {
       const reply = await rawRequest(`GET / HTTP/1.1\r\n${hosts}\r\nConnection: close\r\n\r\n`);

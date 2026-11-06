@@ -1,5 +1,5 @@
 import { argon2, randomBytes } from "node:crypto";
-import { chmodSync, existsSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import Database from "better-sqlite3-multiple-ciphers";
 
 type EncryptedDatabase = Database.Database;
@@ -13,6 +13,9 @@ export const KDF_SETTINGS = {
 } as const;
 
 const SALT_BYTES = 16;
+
+/** Stored inside the encrypted header, so a damaged or empty file can't pass as this database. */
+const APPLICATION_ID = 0x50464442;
 
 export class WrongPasswordError extends Error {
   constructor() {
@@ -37,8 +40,8 @@ export function deriveKey(password: string, salt: Buffer): Promise<Buffer> {
   });
 }
 
-function openWithKey(databasePath: string, key: Buffer): EncryptedDatabase {
-  const db = new Database(databasePath);
+function openWithKey(databasePath: string, key: Buffer, mustExist: boolean): EncryptedDatabase {
+  const db = new Database(databasePath, { fileMustExist: mustExist });
   try {
     db.pragma("cipher = 'sqlcipher'");
     db.pragma("legacy = 4");
@@ -68,9 +71,9 @@ export async function createEncryptedDb(databasePath: string, password: string):
   writeFileSync(salt, saltBytes, { mode: 0o600, flag: "wx" });
 
   try {
-    const db = openWithKey(databasePath, key);
+    const db = openWithKey(databasePath, key, false);
     // An empty file has nothing to check a key against, so write straight away.
-    db.pragma("user_version = 1");
+    db.pragma(`application_id = ${APPLICATION_ID}`);
     chmodSync(databasePath, 0o600);
     return db;
   } catch (error) {
@@ -81,17 +84,21 @@ export async function createEncryptedDb(databasePath: string, password: string):
 }
 
 export async function openEncryptedDb(databasePath: string, password: string): Promise<EncryptedDatabase> {
-  // An empty file would accept any password, so it must never be opened.
-  if (statSync(databasePath).size === 0) {
-    throw new Error("The database is empty or incomplete.");
-  }
   const key = await deriveKey(password, readFileSync(saltPath(databasePath)));
+  let db: EncryptedDatabase;
   try {
-    return openWithKey(databasePath, key);
+    db = openWithKey(databasePath, key, true);
   } catch (error) {
     if ((error as { code?: string }).code === "SQLITE_NOTADB") {
       throw new WrongPasswordError();
     }
     throw error;
   }
+
+  // An empty or cut-down file opens with any password, and has no ID.
+  if (db.pragma("application_id", { simple: true }) !== APPLICATION_ID) {
+    db.close();
+    throw new Error("The database is empty or incomplete.");
+  }
+  return db;
 }

@@ -6,7 +6,7 @@ A private web app that runs only on your Mac. It's being built in phases: see `d
 
 You need Node 25.8.0 (see `.nvmrc`) or Node 24.7 or newer.
 
-Run this once after cloning. It installs dependencies and turns on the pre-commit data guard:
+Run this once after cloning. It installs dependencies and turns on the data guard's git hooks:
 
 ```bash
 npm run setup

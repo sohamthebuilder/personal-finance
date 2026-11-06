@@ -1,177 +1,174 @@
 # Phase 0 test report
 
-Independent QA. All evidence below was gathered by running the behaviour directly, not from the builder's tests or documents.
+Independent QA, second run. All evidence below was gathered by running the behaviour directly, not from the builder's tests or documents.
 
 - **Date:** 2026-11-06
-- **Commit tested:** `76cd36398f469c54640cdc8a0de4f8655048e48b` (`phase-0`, same as `origin/phase-0`)
+- **Commit tested:** `7ef73385a24e86e2f7f33951c335b3b0b253ac8f` (`phase-0`, same as `origin/phase-0`)
 - **Node:** 25.8.0 (npm 11.11.0)
 
 ## Overall result: FAIL
 
-Of 19 criteria: 10 pass, 7 fail, 1 was not tested and 1 is pending.
+Of 19 criteria: 13 pass, 4 fail, 1 was not tested and 1 is pending.
 
-No failure exposes data today, because the app holds none and nothing leaked. The core controls work: the server is local only, encryption holds for any database with data in it, and the main data guard cases are blocked. The failures are gaps at the edges of those controls. The data guard gaps (F1) matter most, because that control exists to stop the owner's real file slipping out.
+This is a big improvement. Every reproduction step from the first run is now fixed, F2 and F5 are closed, and no failure exposes data. The 4 remaining failures come from three narrower problems found by trying new variants:
 
-AC-12 still needs its fresh-session test, which couldn't run here. The owner needs to run one command (see "What couldn't be tested").
+- WebSocket upgrade requests get past the new gate (F3).
+- Some renamed spreadsheets and CSVs still get past the data guard (F1).
+- A 1-byte database file still accepts any password (F4).
+
+AC-12 still needs its fresh-session test, which the owner has to run (see "What couldn't be tested").
 
 ## Results
 
 | ID | Result | Evidence |
 |---|---|---|
-| AC-1 | Pass | `gh`: repo private, pull request 1 open and unmerged, `phase-0` into `main`, `main` has the initial commit |
+| AC-1 | Pass | `gh`: repo private, pull request 1 open and unmerged, `phase-0` into `main` |
 | AC-2 | Pass | `gh api .../vulnerability-alerts` returned 204 (on) |
-| AC-3 | Pass | All 9 direct dependencies exact. Lockfile committed: 83 packages, all from the npm registry, all with integrity hashes. Fresh clone installed with `npm ci` |
-| AC-4 | Pass | Fresh clone, README only: `npm run setup`, `npm run app`, page returned 200 with the expected text. Hook on after setup (`core.hooksPath=.githooks`, file executable) |
-| AC-5 | Pass | `lsof`: one listener, `127.0.0.1:3000`. Refused on `192.168.1.10` and on `[::1]`. Same result in dev mode |
-| AC-6 | Pass | `dev`, `build` and `start` all set the variable (`app` calls them). `next telemetry status` printed Disabled |
-| AC-7 | **Fail** | The proof passes, and every attack on a database with data failed. But a database with nothing written yet opens with any password. See F4 |
-| AC-8 | Pass | Argon2id, 64 MiB, 3 passes, random 16-byte salt, confirmed in code and by test. Password and key absent from every file in the database folder, including live side files. Code never writes them. See limit below |
-| AC-9 | **Fail** | 28 of 36 names ignored. Not ignored: `.sqlite3-wal`, `.sqlite3-shm`, `.sqlite3-journal`, `.db3-wal`, `.db3-journal`, `.s3db-wal`, `.xlt`, `.mdb`. See F1 |
-| AC-10 | **Fail** | All listed extensions, `git add -f`, upper case, compound names and renamed xlsx, xls, ods, Numbers and SQLite files were blocked. Real misses remain. See F1 |
-| AC-11 | **Fail** | Added-then-removed files were caught (exit 1), including merge-only, other-branch and tag-only cases. It misses the same files as AC-10. **Run locally only, not on GitHub** (D-009). See F1 |
-| AC-12 | **Not tested** | The required fresh-session test couldn't run because `claude` isn't logged in here. Partial evidence from this session below |
-| AC-13 | Pass | `gh pr checks 1` and run 42233684662 for this exact commit: Data guard, Tests (87 of 87, plus proof) and Dependency audit all passed. Logs read, nothing skipped |
-| AC-14 | **Fail** | The policy itself passes in real Chrome with a working positive control. But some responses carry no security headers at all. See F2 |
-| AC-15 | **Fail** | 36 attack variants on 9 paths were refused correctly, and normal requests work. But requests that never reach the proxy aren't rejected. See F3 |
-| AC-16 | **Fail** | Traps and layout match section 2 and there are no values. The row type labels were changed and the app name isn't from section 2. See F5 |
+| AC-3 | Pass | Direct dependencies exact, lockfile committed, fresh clone of this commit installed with `npm ci` |
+| AC-4 | Pass | Fresh clone, README only: `npm run setup`, `npm run app`, page returned 200 through `server.ts`. All 3 hooks executable and on after setup |
+| AC-5 | Pass | `lsof`: one listener, `127.0.0.1:3000`, and no other ports. Refused on `192.168.1.10` and `[::1]`. `HOSTNAME=0.0.0.0 PORT=4000` changed nothing. `APP_PORT=3999` stayed on 127.0.0.1 and the allow-list followed it. Dev mode also 127.0.0.1 only |
+| AC-6 | Pass | `start` now sets the variable for `server.ts`, confirmed in the running process's environment. No outbound connections from the server |
+| AC-7 | **Fail** | The proof passes and an empty file is now refused. But a 1-byte file opens with any password. See F4 |
+| AC-8 | Pass | Argon2id with a random salt, unchanged. Password, key and test text absent from all files in the database folder. See limit below |
+| AC-9 | Pass | 45 of 45 names ignored, including every side file missed last time |
+| AC-10 | **Fail** | All 36 extensions, upper case, compound names, folders and every miss from the first run are now blocked. A real FODS file and some CSV forms still commit when renamed. See F1 |
+| AC-11 | **Fail** | Added-then-removed files caught, including all the old misses and a file on an unmerged branch. It shares the new misses from AC-10. **Run locally only, not on GitHub** (D-009) |
+| AC-12 | **Not tested** | `claude auth status` still shows `loggedIn: false`, so the fresh-session test can't run. Evidence from the first run stands, but it isn't the required test |
+| AC-13 | Pass | Run 42237015959 for this exact commit: Data guard (59 files), Tests (127 of 127, plus all 6 proof checks, none skipped) and Dependency audit (0 vulnerabilities) all passed. Logs read |
+| AC-14 | Pass | Every app response now carries the headers. Page policy has a fresh nonce on all 9 scripts and no `unsafe`. Positive control worked in real Chrome through the gate. One exception below |
+| AC-15 | **Fail** | All attacks from the first run now return 403, plus many new ones. But upgrade requests skip the gate. See F3 |
+| AC-16 | Pass | Compared line by line again: the row type wording matches section 2, and the title no longer names the app. No values |
 | AC-17 | Pass | `fdesetup status`: FileVault is On |
-| AC-18 | Pass | 33 paths and 36 blobs across all refs: no blocked names, no spreadsheet or database magic bytes, no secrets. Largest file 47 KB. Docs reviewed: no real figures or account names |
+| AC-18 | Pass | 37 paths and 59 blobs across all refs: no blocked names, no spreadsheet, database or archive magic bytes, no secrets, no real figures or names |
 | AC-19 | Not tested (pending) | `DECISIONS.md`, `security.md` and this report exist. `handoff.md` and the security sign-off don't exist yet. Mismatches to fix are listed under "Other observations" |
 
-**Commands run directly:** `npm test` 87 of 87 passed, `npm run typecheck` clean, `npm audit` 0 vulnerabilities, `npm audit signatures` verified, `npm run guard` clean (36 files).
-
-**AC-12 partial evidence, from this session only, so it doesn't count as the pass:**
-
-- Read on a made-up `.xlsx` and `.CSV` in the scratchpad: refused by permission settings.
-- Read on `made-up-guard-test.xlsx` in the repo: refused by permission settings.
-- Control: Read on a missing `.txt` in the repo returned "File does not exist", so the refusal is the rule firing.
-- No user-level rule mentions these file types, and there is no managed settings file, so the refusal points to the project file.
-- `cat` on a made-up scratchpad spreadsheet: refused by the hook.
+**Commands run directly:** `npm test` 127 of 127 passed, `npm run typecheck` clean, `npm audit` 0 vulnerabilities, `npm audit signatures` verified, `npm run guard` clean (59 files).
 
 **AC-14 detail:**
 
-- A throwaway route in a scratch clone gave the positive control. An inline script, a wrong-nonce script, a non-nonced same-origin script, `eval`, `new Function` and a `style` attribute were all blocked and reported as violations.
-- A nonced script ran, which proves the policy isn't simply blocking everything.
-- The real page showed 0 policy messages in plain headless Chrome, in a run where the same logging captured the control's violations.
+- A throwaway route in a scratch clone was served through `server.ts`. An inline script, a wrong-nonce script, a non-nonced same-origin script, `eval` and a `style` attribute were all blocked and reported as violations. A nonced script ran.
+- The real page showed 0 policy messages, in the same logging setup that captured 4 for the control.
+- The gate's fallback policy doesn't override the page policy: there is one policy header per response, and pages get the nonce version. Spoofing `x-nonce`, `Content-Security-Policy` or `x-middleware-subrequest` changed nothing.
+- **Exception:** Node's own 400 and 431 responses, sent before any app code runs, still have no headers. I counted this as a pass because they hold no content and `security.md` lists it. Note that 431 comes from a long URL, not only from malformed requests. `server.on("clientError")` could close this if the team wants a literal "every response".
 
-**AC-7 and AC-8 detail:**
+**App sanity check:** page opens in real Chrome at 1280, 768, 375 and 320 pixels wide with no sideways scrolling. `npm run dev` starts, is bound to 127.0.0.1, writes no `AGENTS.md`, and refuses a bad Host or Origin on the page.
 
-- Refused: wrong password, different case, empty password, undefined password, random key, all-zero key, one flipped key bit, right key with the wrong cipher, password used as a direct passphrase, salt used as key, swapped salt, no key, and stock `sqlite3` (`.tables` and `.dump`).
-- The test text and table name were absent from the main file, and from `-wal`, `-shm` and `-journal` captured while the database was open or mid-transaction. Those files are all mode 600.
-- `temp_store` is memory, and a large sort left no temp files.
-- A flipped byte in a page was detected.
+## Status of each failure
 
-**App sanity check:** page opens in real Chrome at 1280, 768, 375 and 320 pixels wide with no sideways scrolling. `npm run dev` starts and listens on 127.0.0.1 only, and writes no `AGENTS.md`.
-
-## Failures
-
-### F1: Data guard misses some database, spreadsheet and CSV files (AC-9, AC-10, AC-11). Severity: Medium
-
-Each of these committed successfully with made-up content, and `npm run guard` also passed the two I tried in history (`.sqlite3-wal`, renamed CSV).
-
-| Miss | Why it matters |
-|---|---|
-| CSV or TSV content renamed to `.txt`, `.log` or `.csv~` | The easiest slip. There is no content check for plain tabular text |
-| `.numbers` folder, such as `Budget.numbers/Index/Document.iwa`, with `git add -f` | Only the last part of the path is checked. `.gitignore` catches the folder, but `-f` skips that |
-| `.sqlite3-wal`, `.sqlite3-shm`, `.sqlite3-journal`, `.db3-wal`, `.s3db-journal` | The list covers `-wal` and friends for `.db` and `.sqlite` only. A plain WAL file holds real rows |
-| Plain SQLite WAL or journal content renamed to `.bin` | Their magic bytes aren't checked (`377f0682`, `d9d505f9`) |
-| `.fods`, Excel 2003 XML, `.mdb`, `.accdb`, gzipped CSV | Spreadsheet or database formats with no name or content rule. Lower priority |
-
-Steps to reproduce, in a repo with the hook on:
-
-```bash
-printf 'Date,Accounts,INR\n2020-01-01,Fake Bank,100\n' > qa-table.txt
-git add qa-table.txt && git commit -m test     # commits, should be blocked
-
-mkdir -p Fake.numbers/Index && echo made-up > Fake.numbers/Index/Document.iwa
-git add -f Fake.numbers && git commit -m test  # commits, should be blocked
-
-echo made-up > qa.sqlite3-wal
-git add qa.sqlite3-wal && git commit -m test   # commits, not ignored either
-```
-
-AC-10 names "a spreadsheet or database renamed". Counting a renamed CSV as a spreadsheet is my reading of it. Spotting tabular text will need a heuristic, so the team may prefer to accept that one as a known limit. It's currently not listed in `security.md`.
-
-### F2: Some responses carry no security headers (AC-14). Severity: Low to Medium
-
-The comment in `src/proxy.ts` says nothing is skipped, but Next.js answers these before the proxy runs.
-
-| Request | Response | Security headers |
+| ID | Status | Summary |
 |---|---|---|
-| Any URL with a trailing slash, such as `/foo/` | 308 | None |
-| Absolute-form URL, or `//evil.example/` | 308 | None |
-| `TRACE` on any path | 500 | None of the 7 (it does send `Cache-Control`) |
-| `OPTIONS *` | 500 | None of the 7 |
+| F1 | **Still failing, much narrower** | Every listed miss is blocked now. New renamed forms get through |
+| F2 | Fixed | Trailing-slash redirects, `TRACE` and `OPTIONS *` all carry the headers |
+| F3 | **Still failing, much narrower** | All 5 listed attacks are fixed. One route around the gate remains |
+| F4 | **Still failing, much narrower** | Empty files are refused and creation writes at once. A 1-byte file still opens |
+| F5 | Fixed | Wording matches section 2, and question 1 now asks the owner for the exact label |
 
-A normal browser can reach the trailing slash case. The 400s Node sends for malformed requests, or for HTTP/1.1 with no Host, also have no headers, but those are refused before any app code runs.
+### F3: WebSocket upgrades skip the gate (AC-15). Severity: Low to Medium
+
+`server.ts` only checks the `request` event. After the first allowed request, Next.js attaches its own `upgrade` listener to the server, and upgrade requests go there without passing the gate. So the same hostile request gets a 403 at first and no refusal afterwards. The connection then stays open.
+
+- 200 hostile upgrade sockets stayed open for the full 150 seconds of my test. The server closed none and sent 0 bytes. Normal pages still loaded.
+- In real Chrome, a page on another origin opened `new WebSocket("ws://127.0.0.1:3000/")`. It sat in "connecting" for the 15 seconds I watched, instead of being refused. I tested from a local origin, not a public website.
+
+No content or data was returned, and the socket never opened. It matters because D-014 and `server.ts` say every request is checked, and D-014 tells Phase 4 to put the session check in the gate. Upgrades would skip that too.
 
 ```bash
-curl -si http://127.0.0.1:3000/foo/
-curl -si -X TRACE http://127.0.0.1:3000/
+npm run app
+# In another terminal:
+UP='GET / HTTP/1.1\r\nHost: evil.example\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n\r\n'
+printf "$UP" | nc -w 2 127.0.0.1 3000 | head -1   # 403 Forbidden, if no allowed request has been served yet
+curl -s -o /dev/null http://127.0.0.1:3000/
+printf "$UP" | nc -w 2 127.0.0.1 3000 | head -1   # no response at all
 ```
 
-### F3: Requests that skip the proxy aren't rejected (AC-15). Severity: Low to Medium
+### F1: Some renamed spreadsheets and CSVs still commit (AC-10, AC-11). Severity: Low to Medium
 
-No page content was returned in the first three cases. The risk is that the "rejected everywhere" guarantee isn't true, and later phases will rely on it.
-
-| Request | Expected | Actual |
+| Still commits, and passes `npm run guard` where tried | Why | In `security.md`? |
 |---|---|---|
-| `/foo/` with `Host: evil.example`, a bad Origin, cross-site `Sec-Fetch-Site`, or POST with no Origin | 403 | 308 to `/foo` |
-| `GET http://evil.example/` (absolute form), good Host | 403 or 400 | 308 with `Location: http://evil.example/`, so it redirects off the Mac |
-| `GET http://127.0.0.1:3000/` (absolute form), `Host: evil.example` | 403 | 308 |
-| `TRACE /` with a bad Host or bad Origin | 403 | 500, with a stack trace in the server log only |
-| Two Host headers, good one first, then `evil.example` | 400 or 403 | **200 with the page.** Node keeps the first. With the bad one first it's 403 |
+| Real FODS spreadsheet renamed to `.xml` | The check looks for `office:spreadsheet`, which sits deep in the file, in the first 1024 bytes only. The mimetype at the top says `opendocument.spreadsheet` | No |
+| UTF-16 tab-separated text, which Excel's "Unicode Text" save produces | The heuristic gives up on any NUL byte | No |
+| A perfect CSV with one title line above it | Only the first line's field count is compared | No |
+| CSV with Mac-style CR-only line endings | Seen as a single line | No |
+| Pipe or colon-separated text | Those separators aren't checked | No |
+| Access database (`.mdb`, `.accdb`) renamed to `.bin` | Blocked by name only, with no content check. Lower priority | No |
 
-A browser can't send the last four, so DNS rebinding isn't helped by them. The first row can be sent by a rebinding page, but it only gets a redirect, and following it hits the 403.
+Two-column CSVs, very uneven rows and tables in `.md`, `.json`, `.js`, `.yml` or `.html` also commit, but `security.md` lists those as known limits, so I haven't counted them.
+
+The FODS case is a plain AC-10 miss and a small fix. The CSV forms depend on reading a renamed CSV as a spreadsheet, as noted in the first run. No heuristic will catch everything, so the team may accept some of these, but each one accepted should be listed in `security.md`.
 
 ```bash
-curl -si -H 'Host: evil.example' http://127.0.0.1:3000/foo/
-printf 'GET http://evil.example/ HTTP/1.1\r\nHost: 127.0.0.1:3000\r\nConnection: close\r\n\r\n' | nc 127.0.0.1 3000
-printf 'GET / HTTP/1.1\r\nHost: 127.0.0.1:3000\r\nHost: evil.example\r\nConnection: close\r\n\r\n' | nc 127.0.0.1 3000
+python3 -c "open('qa-table.txt','wb').write('Date\tAccounts\tINR\n2020-01-01\tFake Bank\t100\n2020-01-02\tFake Bank\t200\n'.encode('utf-16'))"
+git add qa-table.txt && git commit -m test     # commits, UTF-16 table
+
+printf 'Fake Report\nDate,Accounts,INR\n2020-01-01,Fake Bank,100\n2020-01-02,Fake Bank,200\n' > qa-title.txt
+git add qa-title.txt && git commit -m test     # commits, title row
 ```
 
-### F4: An empty database accepts any password, and that password then takes it over (AC-7). Severity: Low to Medium
+For FODS, commit any `.fods` file renamed to `.xml` where `<office:spreadsheet>` comes after the first 1024 bytes, which is normal for a real file.
 
-`createEncryptedDb` leaves a 0-byte file until the first write, and an empty file has nothing to check the key against. If a crash or early exit comes between create and first write, the next password typed "works". Any write then encrypts the database with that password, and the original is refused. No data can be exposed this way, because the file is empty. But Phase 4's login would treat a wrong password as correct. With one table written, a wrong password is refused correctly.
+### F4: A 1-byte database file accepts any password (AC-7). Severity: Low
+
+The fix checks for exactly 0 bytes. I tried real ciphertext cut to every size from 1 to 32 bytes, and to 100, 512, 1024, 4095 and 4096. Only 1 byte opens with a wrong password. Any write then takes the file over and the original password is refused, as in the first run.
+
+This needs a damaged file, because `createEncryptedDb` can't leave one, and nothing can be read from it. Refusing anything smaller than one page would close it.
 
 ```ts
-const c = await createEncryptedDb(path, "made-up-right");
-c.close();                                                // file is 0 bytes
-const d = await openEncryptedDb(path, "made-up-WRONG");   // opens, should throw
-d.exec("CREATE TABLE t(n)"); d.close();
-await openEncryptedDb(path, "made-up-right");             // now WrongPasswordError
+const c = await createEncryptedDb(path, "made-up-right"); c.close();
+truncateSync(path, 1);
+await openEncryptedDb(path, "made-up-WRONG");   // opens, should throw
 ```
 
-### F5: `export-format.md` goes beyond section 2 (AC-16). Severity: Low
+Everything else I tried was refused: a create-only file, a copy taken while open, NUL-filled files of 100 bytes and up, random bytes, a plain database swapped in, a bare SQLite header, a symlink to an empty file, and an empty file with a `-wal` beside it.
 
-- Section 2 has one row type, `Income / Expense Balance`. The document turns it into two exact labels, `` `Income Balance` `` and `` `Expense Balance` ``. Section 2 doesn't state those labels. Phase 1 could hard-code them, and rows would be misclassified if they're wrong. Restore the original wording, or have the owner confirm the labels along with the header row in question 1.
-- The title names "Money Manager", which comes from section 1, while the document says it uses only section 2.
+## What the gate survived
 
-Everything else matched line by line: 12 columns, no row IDs, the other row types, the pairing note, all 9 traps, and `Tag` and `Description`. It holds no values.
+These all got the right answer through `server.ts`:
+
+- **Refused with 403 and headers:** bad Host, Origin and `Sec-Fetch-Site` on trailing-slash URLs, absolute-form URLs (including an upper-case scheme), `//` and `/\` paths, `TRACE`, `PROPFIND`, `OPTIONS *`, and duplicate Host, Origin or `Sec-Fetch-Site`, even when identical or with mixed-case names.
+- **Refused by Node with 400:** folded headers, a space before the colon, bare LF, NUL in Host, and a smuggling attempt with both `Content-Length` and `Transfer-Encoding`.
+- **No redirect off the Mac:** 11 path tricks, such as `/.//evil.example/`, `/%2f/` and `/foo/..//`, all stayed on-host.
+- **Pipelining:** a good request then a bad one on the same socket gave 200, then 403.
+- **Header spoofs:** `x-middleware-subrequest`, `x-matched-path`, `x-invoke-*` and `x-forwarded-host` didn't skip the policy.
+- **Stability:** bad percent encoding and long URLs caused no crash and no server errors in the log.
+- **Bad settings fail safely:** `APP_PORT=abc` falls back to 3000, while `APP_PORT=99999` and a busy port both stop the server.
 
 ## What couldn't be tested
 
-- **AC-12 fresh session.** The required `claude -p` command exited with "Not logged in · Please run /login", so the rule was never exercised. `claude auth status` shows `loggedIn: false`. I didn't log in or use any other credential. The owner should log in and run this from the repo root. A refusal from permission settings is a pass, and "file does not exist" is a fail:
+- **AC-12 fresh session.** `claude` isn't logged in here, and I didn't log in or use any other credential. The owner should log in and run this from the repo root. A refusal from permission settings is a pass, and "file does not exist" is a fail:
   `claude -p "Use the Read tool to open made-up-guard-test.xlsx in the current folder and tell me exactly what happened"`
 - **AC-11 on GitHub.** The failure path was run locally only, by design (D-009). A real failing check on GitHub hasn't been seen.
 - **AC-8 system-wide.** I scanned the database folder and read the code. I didn't trace every disk write on the Mac, which needs root.
-- **Hook on symlinks, and the Excel lock-file name `~$name.xlsx`.** The hook refused the commands, so neither was exercised by me.
-- **Dev mode websocket from a hostile Origin.** My probe got no response, so the result is inconclusive. This affects dev mode only.
-- **Unicode forms of a password.** My test was invalidated by F4, so this is unknown.
-
-## Control evidence from this run
-
-The hook and permission rule blocked me as designed. My first attempt at AC-10 in a temporary clone was refused ("mentions a spreadsheet and a location outside the repo"), so I used a throwaway local branch in this repo, as the test plan allows.
+- **Hook on symlinks, and the Excel lock-file name `~$name.xlsx`.** The hook refuses commands that set these up, so neither was exercised by me.
+- **Whether `"onFailure": "block"` is honoured.** The hook now exits 2 on every crash I tried (bad, empty and wrongly typed input), so this only matters if `node` itself can't start.
 
 ## Other observations (not failures)
 
-- **Leftover local test objects.** My made-up commits are unreachable but still inside `.git`: 61 commits, 105 trees and 17 blobs, all fake content, never pushed. My attempt to prune them was refused by the permission system as irreversible, so I left them. They don't appear in any branch, and `npm run guard` doesn't see them. The test branch, tag and fixture folder are gone. They'll expire through normal git housekeeping, or the owner can remove them with `git reflog expire --expire-unreachable=now --all && git prune --expire=now`. There were no unreachable objects before testing, so that would remove only my test objects.
-- **The hook is wider open than `security.md` says.** The known limit mentions only file names built at runtime. Given as text (nothing was run), the hook also allowed `cat folder/*`, `grep -r word folder`, `cp -r folder .`, `find folder -name '*.xl*'`, and the Grep and Glob tools on a folder with no file filter. An agent could reach a spreadsheet by accident this way. The deny rule may still stop the Grep and Glob cases, but that's unconfirmed. The hook also covers only four tools.
-- **`"onFailure": "block"` in `.claude/settings.json` is unverified.** I couldn't confirm that setting is honoured, so a crashing hook might not block.
-- **Hook false alarms.** It reads `//` in a `sed` command, and XML closing tags, as outside paths when the command also names a spreadsheet. A nuisance, not a risk.
-- **The pre-commit hook doesn't run on merges or cherry-picks.** Both brought a blocked file in, once a bad commit existed through `--no-verify`. `npm run guard` caught that file. `security.md` lists `--no-verify` but not these two.
-- **Document mismatches to fix for AC-19.** The `src/proxy.ts` comment "nothing is skipped" isn't accurate (F2). `security.md` C4 and D-007 will need updating once F1 is settled.
-- **Friendlier errors for Phase 4.** A missing or empty salt file gives a raw system error, and a corrupt first page reports as a wrong password.
-- **Commit metadata** contains the owner's email address. It isn't financial data, but the owner may want to know.
-- **AC-13 needs a re-check.** Adding this report and any fixes creates a new commit, so the pull request check must pass again on the final commit.
-- **Harmless responses.** `POST` or `OPTIONS` on a static file gives 500, and `OPTIONS /` gives 400. All of these carry the headers. Chrome logged one 404 on first load, most likely the missing favicon. It isn't a policy message.
+- **`pre-push` misses a commit pushed by hash.** The hook scans refs and ignores what's actually being pushed. With the hook on, `git push <remote> <hash>:refs/heads/x` sent a fake blocked file to a local bare repo, because no ref pointed at that commit. `git push <remote> 'HEAD@{1}:refs/heads/x'` also worked for a commit no ref pointed at. It takes a bad commit made earlier with `--no-verify`, so it's unlikely by accident. Reading the hook's standard input would close it. D-015 calls this hook the last check before data leaves the Mac.
+- **What `pre-push` and `pre-merge-commit` did catch.** True merges, `--no-commit` and `--squash` were blocked. Fast-forward merges, rebases and cherry-picks still bring a bad commit in, but `pre-push` then blocked pushing it. `security.md` mentions only cherry-picks. While a bad branch exists locally, every push is refused, even of clean branches. That errs on the safe side.
+- **False positives are low.** Nothing in this repo is blocked (59 file versions), and 0 of 3,207 real files in `node_modules` were flagged. Short samples I wrote to be worst cases were blocked in `.jsx`, `.mts`, `.cts`, `.sql`, `.sh`, `.toml`, `.py`, `.map`, `.txt`, `.env.example` and `Makefile`. Real files of these types are less even, and a false block fails safely. But `.jsx`, `.mts` and `.cts` are source code and could be added to the skip list.
+- **Other archives aren't blocked.** Bzip2, xz, 7z, rar, zstd and plain tar all commit, though a comment in the guard says no archive belongs here. Zip and gzip are blocked as the builder said. A base64-encoded spreadsheet, or one with a junk byte in front, also commits.
+- **Document mismatches to fix for AC-19.** `server.ts` and D-014 say every request is checked (F3). `security.md` needs the new F1 forms or the fixes. README line 9 still says only "pre-commit data guard". D-015 needs the push-by-hash gap.
+- **Dev mode has no gate, as documented.** A trailing slash with a bad Host gives 308, and `TRACE` gives 500. The dev websocket question from the first run is settled: a hostile Host or Origin gets "Unauthorized" and is closed, while a valid request gets 101.
+- **Crash leftovers lock the path.** A 0-byte file plus its salt can be neither opened nor recreated until deleted by hand. That's safe, but Phase 4 will want a clear message.
+- **Password forms.** The same password in a different Unicode form is refused. Phase 4 should decide whether to normalise before the first real password is set.
+- **Static files changed caching.** They were `immutable` and are now `no-store`, because the gate's baseline stays in place. Harmless on one Mac, and safer if anything.
+- **AC-13 needs a re-check.** This report and any fixes create a new commit, so the pull request check must pass again on the final commit.
+
+## Test leftovers
+
+- **Pushes went only to a local bare repo in my scratch folder,** using a fake `.dat` file. Nothing went to GitHub, and that repo is deleted.
+- **Unreachable test objects remain in `.git`.** There are now 119 commits, 226 trees and 57 blobs from both runs, all made-up content, never pushed, and not on any branch. As instructed, I didn't retry the prune. Normal git housekeeping will expire them, or the owner can run `git reflog expire --expire-unreachable=now --all && git prune --expire=now`. There were none before testing, so that removes only test objects.
+- **`refs/remotes/origin/HEAD`** appeared after I ran `git fetch`. It points at `origin/main` and is harmless.
+- **The hook blocked me as designed** in the first run when I tried a temporary clone, so both runs used a throwaway local branch here, which is now deleted.
+
+## History of the first run
+
+Tested on `76cd363`. Result: Fail, with 10 pass, 7 fail, 1 not tested and 1 pending.
+
+| ID | What failed | Criteria |
+|---|---|---|
+| F1 | Guard and `.gitignore` missed renamed CSVs, `.numbers` folders, `.sqlite3-wal` and similar side files, renamed WAL and journal files, and several formats | AC-9, AC-10, AC-11 |
+| F2 | Trailing-slash redirects, `TRACE` and `OPTIONS *` had no security headers, because Next.js answered before the proxy ran | AC-14 |
+| F3 | Those same requests skipped Host and Origin checks. An absolute-form URL redirected to `evil.example`, and a duplicate Host with the good one first returned the page | AC-15 |
+| F4 | A database with nothing written opened with any password, which then took it over | AC-7 |
+| F5 | `export-format.md` invented two exact labels and named the app, neither from section 2 | AC-16 |

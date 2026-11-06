@@ -3,14 +3,23 @@
  * such as trailing-slash redirects, so this gate checks every request first.
  * It also sets baseline headers, so redirects and errors carry them too.
  */
-import { createServer } from "node:http";
+import { EventEmitter } from "node:events";
+import { createServer, type Server } from "node:http";
 import next from "next";
 import { appPort, baselineHeaders, checkRawRequest } from "./src/lib/security/request-policy.ts";
 
 const HOST = "127.0.0.1";
 const port = appPort();
 
-const app = next({ dev: false, hostname: HOST, port: Number(port) });
+// Next.js attaches an "upgrade" listener to the server it's given, and upgrades
+// sent there would skip this gate. It gets a stand-in, so the real server has no
+// such listener and Node treats an upgrade request as a normal request.
+const app = next({
+  dev: false,
+  hostname: HOST,
+  port: Number(port),
+  httpServer: new EventEmitter() as Server,
+});
 const handle = app.getRequestHandler();
 await app.prepare();
 

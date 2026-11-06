@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, truncateSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, describe, it } from "node:test";
@@ -78,6 +78,26 @@ describe("encrypted database", () => {
     writeFileSync(crashed, "");
     writeFileSync(saltPath(crashed), Buffer.alloc(16, 1));
     await assert.rejects(openEncryptedDb(crashed, PASSWORD), /empty or incomplete/);
+  });
+
+  it("refuses a database cut down to any small size, with any password", async () => {
+    for (const size of [1, 2, 16, 100, 1024, 4095]) {
+      const cut = join(folder, `cut-${size}.db`);
+      (await createEncryptedDb(cut, PASSWORD)).close();
+      truncateSync(cut, size);
+      await assert.rejects(openEncryptedDb(cut, "wrong"), `wrong password, ${size} bytes`);
+      await assert.rejects(openEncryptedDb(cut, PASSWORD), `right password, ${size} bytes`);
+    }
+  });
+
+  it("refuses a plain, unencrypted database swapped into place", async () => {
+    const swapped = join(folder, "swapped.db");
+    (await createEncryptedDb(swapped, PASSWORD)).close();
+    rmSync(swapped);
+    const plain = new Database(swapped);
+    plain.exec("CREATE TABLE t (note TEXT)");
+    plain.close();
+    await assert.rejects(openEncryptedDb(swapped, PASSWORD));
   });
 
   it("won't create a database when opening a missing one", async () => {
