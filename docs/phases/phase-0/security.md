@@ -26,6 +26,7 @@ This phase handles no real data, so the risks are about the foundations: anythin
 
 - **`main` isn't enforced.** The free plan can't require checks or block direct pushes on a private repo, so C3 reports a failure but can't stop a merge. The owner's sign-off is the real gate.
 - **The git hooks can be skipped.** `--no-verify` skips them, and a fresh clone has none until setup runs. Cherry-picks, rebases and fast-forward merges skip the commit hook, but the pre-push hook catches them. C3 is the backstop, though it runs after the push, so data would already be on GitHub by then.
+- **A raw git object can skip the guard.** A blob or tree pushed by hash as a tag isn't scanned, because the guard walks commits. It takes a deliberate command, so it isn't an accident risk.
 - **C6 and C7 stop mistakes, not a determined bypass.** They aren't a sandbox. A script that builds a file name at runtime gets past them. So do shell commands that reach a spreadsheet without naming its type, such as `cat folder/*`, `cp -r folder .` or `grep -r word folder`. Only four tools are covered. Agents are also told not to touch these files, and that instruction is part of the control.
 - **The hook has false alarms.** A shell command that names a spreadsheet type and also contains something that looks like an outside path is refused, even if it reads nothing. Use the Edit tool instead of working around it.
 - **Content detection has accepted gaps.** No check can catch every disguise, so these are accepted for a guard against mistakes:

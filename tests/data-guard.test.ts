@@ -97,6 +97,7 @@ describe("pre-commit hook", () => {
     ["gzipped file", Buffer.concat([Buffer.from("1f8b08", "hex"), Buffer.alloc(100)])],
     ["Excel XML", Buffer.from('<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook>')],
     ["FODS with its marker deep in the file", Buffer.from(`<?xml version="1.0"?><doc>${" ".repeat(5000)}<office:spreadsheet/></doc>`)],
+    ["XML spreadsheet with a byte-order mark", Buffer.concat([Buffer.from("efbbbf", "hex"), Buffer.from("<?xml?><office:spreadsheet/>")])],
     ["UTF-16 table", Buffer.concat([Buffer.from("fffe", "hex"), Buffer.from("a\tb\tc\n1\t2\t3\n", "utf16le")])],
     ["Access database", Buffer.concat([Buffer.alloc(4), Buffer.from("Standard Jet DB"), Buffer.alloc(100)])],
     ["bzip2 file", Buffer.concat([Buffer.from("425a6839", "hex"), Buffer.alloc(100)])],

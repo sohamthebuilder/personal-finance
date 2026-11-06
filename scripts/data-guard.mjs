@@ -114,7 +114,7 @@ function contentProblem(path, bytes) {
 
   // XML spreadsheets can carry their marker deep in the file.
   const asText = bytes.toString("latin1");
-  if (asText.trimStart().startsWith("<") && /progid="Excel\.Sheet"|office:spreadsheet|opendocument\.spreadsheet/.test(asText)) {
+  if (asText.replace(/^\xef\xbb\xbf/, "").trimStart().startsWith("<") && /progid="Excel\.Sheet"|office:spreadsheet|opendocument\.spreadsheet/.test(asText)) {
     return "XML spreadsheet content";
   }
 
