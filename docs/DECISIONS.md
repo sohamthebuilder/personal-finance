@@ -86,3 +86,9 @@ One entry per decision that later phases need to know. Newest at the bottom. No 
 - **Phase:** 0
 - **Decision:** Proposed for Phase 4: keep the database outside the repo folder, such as in `~/Library/Application Support/`.
 - **Why:** Encrypted files look like random bytes, so the data guard can't recognise one with an unusual extension.
+
+## D-013: No generated agent files
+
+- **Phase:** 0
+- **Decision:** `next.config.ts` sets `agentRules: false`.
+- **Why:** `next dev` otherwise writes an `AGENTS.md` of instructions for AI agents into the repo. Agent instructions here should come only from the owner and the project docs.

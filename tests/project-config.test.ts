@@ -94,3 +94,9 @@ describe("the app", () => {
     assert.doesNotMatch(read("src/app/layout.tsx"), /next\/font\/google|<script|https?:\/\//);
   });
 });
+
+describe("next.config.ts", () => {
+  it("stops Next.js writing agent instructions into the repo", () => {
+    assert.match(read("next.config.ts"), /agentRules: false/);
+  });
+});
