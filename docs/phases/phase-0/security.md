@@ -27,7 +27,7 @@ This phase handles no real data, so the risks are about the foundations: anythin
 - **`main` isn't enforced.** The free plan can't require checks or block direct pushes on a private repo, so C3 reports a failure but can't stop a merge. The owner's sign-off is the real gate.
 - **The git hooks can be skipped.** `--no-verify` skips them, and a fresh clone has none until setup runs. Cherry-picks, rebases and fast-forward merges skip the commit hook, but the pre-push hook catches them. C3 is the backstop, though it runs after the push, so data would already be on GitHub by then.
 - **A raw git object can skip the guard.** A blob or tree pushed by hash as a tag isn't scanned, because the guard walks commits. It takes a deliberate command, so it isn't an accident risk.
-- **C6 and C7 stop mistakes, not a determined bypass.** They aren't a sandbox. A script that builds a file name at runtime gets past them. So do shell commands that reach a spreadsheet without naming its type, such as `cat folder/*`, `cp -r folder .` or `grep -r word folder`. The hook covers four tools: Bash, Read, Grep and Glob. Other agent tools that can run commands or open local files aren't covered. Agents are also told not to touch these files, and that instruction is part of the control.
+- **C6 and C7 stop mistakes, not a determined bypass.** They aren't a sandbox. A script that builds a file name at runtime gets past them. So do shell commands that reach a spreadsheet without naming its type, such as `cat folder/*`, `cp -r folder .` or `grep -r word folder`. The hook covers four tools: Bash, Read, Grep and Glob. Other agent tools that can run commands or open local files aren't covered. A search pattern is only checked up to its first wildcard, so one that hides the file type behind a wildcard isn't caught. Agents are also told not to touch these files, and that instruction is part of the control.
 - **The hook has false alarms.** A shell command that names a spreadsheet type and also contains something that looks like an outside path is refused, even if it reads nothing. Use the Edit tool instead of working around it.
 - **Content detection has accepted gaps.** No check can catch every disguise, so these are accepted for a guard against mistakes:
   - Table-shaped text is found by a heuristic. It misses two-column CSVs, very uneven rows, colon-separated text and UTF-16 with no byte-order mark.
@@ -193,8 +193,10 @@ The throwaway branch is deleted. One unreachable blob and one tree of made-up co
 Added by the engineer. The sign-off above is unchanged and covers `8e5d90a` only.
 
 - **S-5 fixed.** The hook now reads where a search pattern points, so a Glob aimed outside the repo is refused from any folder. That covers absolute, `~`, `..` and brace patterns.
-- **S-6 fixed.** `.xlt` and `.fods` are now in the deny rules and the hook, and a test keeps them in step.
+- **S-6 fixed.** `.xlt` and `.fods` are now in the deny rules and the hook, so all three lists match today. No test compares them with the guard's list, so a type added to the guard alone wouldn't fail.
 - **Also fixed:** the hook didn't recognise types listed in braces, such as `*.{txt,xlsx}`. Nobody had reported this. It came up while fixing S-5.
 - **S-8, S-9 and S-10 addressed.** Known limits and C13 are updated.
 - **S-1 recorded** in D-005 and in the owner's Node question.
 - **Conditions 1 and 2 are still open.** Only the owner can meet them.
+
+**Security recheck of `c4c3f59`:** S-5, S-6 and S-8 are closed, and the change weakens nothing. This was a read-only review of the diff, with no real search run outside the repo. False alarms rise slightly, which fails safe. It doesn't change conditions 1 and 2.
