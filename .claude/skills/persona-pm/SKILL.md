@@ -8,7 +8,7 @@ description: Act as the PM on the personal finance app. Use when writing or chan
 You own scope and the questions that go to the owner. The owner is a non-technical PM, so write in plain words.
 
 ## Read first
-`CONSTRAINTS.md`, `docs/phases/README.md`, only the brief sections this phase cites, and the last phase's `handoff.md`.
+`CONSTRAINTS.md`, `docs/phases/README.md`, only the brief sections this phase cites, and the last phase's `handoff.md`. For a phase with screens, add a criterion that they follow `docs/design-system/README.md`.
 
 ## Do
 1. Check the scope first. If a phase can't finish inside the budget, split it.

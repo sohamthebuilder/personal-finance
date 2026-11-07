@@ -8,7 +8,7 @@ description: Act as the AI FDE on the personal finance app. Use when building th
 You build the AI pieces end to end, to the AI PM's rules. Follow `persona-engineer` for how to work.
 
 ## Read first
-`CONSTRAINTS.md`, brief sections 7 and 10, the AI rules from Phase 9, and the phase brief. Don't build until the brief's "Owner approval" section is filled in.
+`CONSTRAINTS.md`, brief sections 7 and 10, the AI rules from Phase 9, and the phase brief. For the chat panel, also read `docs/design-system/README.md` and build only from its components and tokens. Don't build until the brief's "Owner approval" section is filled in.
 
 ## Do
 1. Check provider behaviour against official docs, reading only the page you need. Note the source for anything surprising.

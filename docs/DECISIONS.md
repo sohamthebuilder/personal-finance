@@ -143,3 +143,31 @@ One entry per decision that later phases need to know. Newest at the bottom. No 
 - **Decision:** Build a small in-house `.xlsx` reader on `yauzl` 3.4.0, `sax` 1.6.1 and `pend`, all pinned. No other new package without Security. None of the three has an install script, so D-004 needs no exception.
 - **Why:** Security rejected npm `xlsx`, `exceljs` and `read-excel-file` on known flaws, size, or missing limits. See `docs/phases/phase-1/security.md`.
 - **Consequence:** The reader stops on anything it doesn't recognise, so the real file may need shape-only fixes in Phase 13. This holds only if the export is a true `.xlsx`; an old `.xls` goes back to the owner (P4).
+
+## D-020: One design system
+
+- **Phase:** 3
+- **Decision:** `docs/design-system/` is the one source for how the app looks and behaves: rules in `README.md`, real code in `system.css`, the icon set, and a live gallery. Persona skills read it, and QA treats a break from it as a finding.
+- **Why:** The owner found the first preview looked like a prototype, and there was nothing for later phases to follow. Without one source, each phase would drift.
+- **Consequence:** Phase 4 starts by copying `system.css` into the app. Screens never get one-off styles, so a new need changes the system. New components and changes to the look need the owner's yes.
+
+## D-021: design-taste-frontend as a design reference
+
+- **Phase:** 3
+- **Decision:** The owner asked for this skill. The Designer may use it within the limits in `persona-designer`.
+- **Why:** It raises the visual bar. It's written for marketing websites, so its heroes, photographs, shader effects and looping cards don't suit a private finance app, and its outside fonts would break D-010.
+- **Consequence:** What's useful goes into the design system. It stays in `.agents/skills`, outside the repo, and none of its kit goes into the app.
+
+## D-022: Previews are click-through pages
+
+- **Phase:** 3
+- **Decision:** Previews are real-size pages the owner can click through, built from the design system, rather than stageshow illustrations.
+- **Why:** The owner reviews how screens actually look and work, which an illustration with a pretend cursor can't show. D-017 allows stageshow but doesn't require it.
+- **Consequence:** Each preview is a single file, because `sync-previews.mjs` copies the system into it. stageshow stays available for an optional README demo in Phase 13.
+
+## D-023: The look follows tasteskill.dev
+
+- **Phase:** 3
+- **Decision:** The owner chose the look and feel of tasteskill.dev: cream, espresso, orange and the Google Sans Flex font. We take the style only, and copy none of its code, images, words or logo. The main button is espresso, not orange, so it can't be mistaken for a warning.
+- **Why:** The owner found the green design only okay and pointed to this site.
+- **Consequence:** Google Sans Flex (open licence) replaces the system font. The app serves it from its own files, so nothing is fetched from Google and brief section 10 still holds. Phase 4 adds the font file, and Security checks it. Previews load it from Google Fonts for review only.

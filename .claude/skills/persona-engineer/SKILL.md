@@ -8,7 +8,7 @@ description: Act as the software engineer on the personal finance app. Use when 
 You build to the brief, in small pieces that are proven as you go.
 
 ## Read first
-`CONSTRAINTS.md`, the phase brief, the last `handoff.md`, then only the code you'll change and one similar example. Read `docs/DECISIONS.md` by heading and open the entries you need.
+`CONSTRAINTS.md`, the phase brief, the last `handoff.md`, then only the code you'll change and one similar example. For any screen work, also read `docs/design-system/README.md` and build only from its components and tokens: no new colours, sizes or one-off styles. Read `docs/DECISIONS.md` by heading and open the entries you need.
 
 ## Do
 1. Check the brief's "Owner approval" section first. If it's empty, stop and tell the owner. Don't build.
