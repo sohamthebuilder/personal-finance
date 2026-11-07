@@ -27,6 +27,7 @@ export const REJECTION_MESSAGES = {
   BAD_DATE: "Some rows have a date the app can't read.",
   BAD_AMOUNT: "Some rows have an amount the app can't read.",
   MISSING_ACCOUNT: "Some rows have no account.",
+  AMOUNTS_TOO_LARGE: "The amounts in this file are too large to add up safely.",
   SAVE_FAILED: "The import couldn't be saved. Nothing was changed.",
   INTERNAL_ERROR: "The import failed. Nothing was changed.",
 } as const;

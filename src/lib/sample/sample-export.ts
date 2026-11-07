@@ -24,9 +24,45 @@ export const ACCOUNTS = {
   friends: "Money With Friends Demo",
   usd: "Sample USD Account",
   closed: "Closed Demo Bank",
+  reimbursement: "Demo Reimbursements",
+  business: "Pretend Business",
+  fund: "Pretend Fund",
 } as const;
 
 export const CLOSED_ACCOUNTS: readonly string[] = [ACCOUNTS.closed];
+
+const INVESTMENT_ACCOUNTS: readonly string[] = [ACCOUNTS.broker, ACCOUNTS.fund];
+
+/** What a careful owner would answer in setup for this sample. */
+export const SAMPLE_SETUP = {
+  accountGroups: [
+    { account: ACCOUNTS.bank, group: "Bank" },
+    { account: ACCOUNTS.closed, group: "Bank" },
+    { account: ACCOUNTS.usd, group: "Bank" },
+    { account: ACCOUNTS.card, group: "Cards" },
+    { account: ACCOUNTS.wallet, group: "Wallets" },
+    { account: ACCOUNTS.broker, group: "Investments" },
+    { account: ACCOUNTS.fund, group: "Investments" },
+    { account: ACCOUNTS.friends, group: "Money with others" },
+    { account: ACCOUNTS.reimbursement, group: "Money with others" },
+    { account: ACCOUNTS.business, group: "Business" },
+  ],
+  returnCategories: ["Made-up Market Moves", "Made-up Interest", "Made-up Dividends"],
+  loanCategories: ["Made-up Loan"],
+  reimbursementAccount: ACCOUNTS.reimbursement,
+  trendsStartDate: "2024-01-01",
+} as const;
+
+/** Each line's total in paise. */
+export interface ExpectedTotals {
+  earned: number;
+  spent: number;
+  investmentReturns: number;
+  loans: number;
+  recovered: number;
+  otherCorrections: number;
+  invested: number;
+}
 
 export const HOSTILE_NOTES = [
   '=HYPERLINK("http://example.invalid","click")',
@@ -57,6 +93,13 @@ interface LedgerEntry {
   change: number;
 }
 
+/** Written alongside each row, from what the generator meant it to be. The metrics code never sees this. */
+interface ExpectedEntry {
+  date: string;
+  line: keyof ExpectedTotals;
+  paise: number;
+}
+
 export interface Sample {
   bytes: Uint8Array;
   /** In the order written. Row N of this array is sheet row N + 2. */
@@ -66,6 +109,8 @@ export interface Sample {
   transferPairs: number;
   closedAccounts: readonly string[];
   balancesAsOf(date: string): Map<string, number>;
+  /** The generator's own totals for a period, both dates included, stopping at `today`. */
+  expectedTotals(from: string, to: string, today?: string): ExpectedTotals;
 }
 
 function randomFrom(seed: number): () => number {
@@ -99,7 +144,12 @@ export function makeSample(): Sample {
   const between = (low: number, high: number): number => low + Math.floor(random() * (high - low + 1));
   const rows: SampleRow[] = [];
   const ledger: LedgerEntry[] = [];
+  const expected: ExpectedEntry[] = [];
   let transferPairs = 0;
+
+  const expect = (at: string, line: keyof ExpectedTotals, paise: number): void => {
+    expected.push({ date: at.slice(0, 10), line, paise });
+  };
 
   function add(row: Partial<SampleRow> & Pick<SampleRow, "at" | "account" | "paise" | "type">, change: number): void {
     rows.push({
@@ -114,20 +164,38 @@ export function makeSample(): Sample {
     ledger.push({ date: row.at.slice(0, 10), account: row.account, change });
   }
 
-  const spend = (at: string, account: string, paise: number, category: string, subcategory: string, note = ""): void =>
+  const spend = (at: string, account: string, paise: number, category: string, subcategory: string, note = ""): void => {
     add({ at, account, paise, type: "Exp.", category, subcategory, note }, -paise);
-  const earn = (at: string, account: string, paise: number, category: string, note = ""): void =>
+    expect(at, "spent", paise);
+  };
+  const income = (line: keyof ExpectedTotals, at: string, account: string, paise: number, category: string, note = ""): void => {
     add({ at, account, paise, type: "Income", category, note }, paise);
-  const correctUp = (at: string, account: string, paise: number): void =>
+    expect(at, line, paise);
+  };
+  const earn = (at: string, account: string, paise: number, category: string, note = ""): void =>
+    income("earned", at, account, paise, category, note);
+  const gain = (at: string, account: string, paise: number, category: string): void =>
+    income("investmentReturns", at, account, paise, category);
+  const correctionLine = (account: string): keyof ExpectedTotals =>
+    account === ACCOUNTS.reimbursement ? "recovered" : "otherCorrections";
+  const correctUp = (at: string, account: string, paise: number): void => {
     add({ at, account, paise, type: "Income Balance", category: "Modified Bal.", note: "Modified Bal." }, paise);
-  const correctDown = (at: string, account: string, paise: number): void =>
+    expect(at, correctionLine(account), paise);
+  };
+  const correctDown = (at: string, account: string, paise: number): void => {
     add({ at, account, paise, type: "Expense Balance", category: "Modified Bal.", note: "Modified Bal." }, -paise);
+    expect(at, correctionLine(account), -paise);
+  };
 
   function transfer(at: string, from: string, to: string, paise: number, foreign?: { amount: number; currency: string }): void {
     const shared = { at, paise, category: "Transfer", amount: foreign?.amount ?? paise / 100, currency: foreign?.currency ?? "INR" };
     add({ ...shared, account: from, secondAccount: to, type: "Transfer-Out" }, -paise);
     add({ ...shared, account: to, secondAccount: from, type: "Transfer-In" }, paise);
     transferPairs += 1;
+    const intoInvestments = INVESTMENT_ACCOUNTS.includes(to);
+    const outOfInvestments = INVESTMENT_ACCOUNTS.includes(from);
+    if (intoInvestments && !outOfInvestments) expect(at, "invested", paise);
+    if (outOfInvestments && !intoInvestments) expect(at, "invested", -paise);
   }
 
   // Trap 4: early history is thin, with whole months missing.
@@ -139,7 +207,7 @@ export function makeSample(): Sample {
   correctUp("2024-01-02T10:00:00", ACCOUNTS.closed, 40_000_00);
   transfer("2024-01-05T10:00:00", ACCOUNTS.bank, ACCOUNTS.closed, 15_000_50);
   spend("2024-02-10T10:00:00", ACCOUNTS.closed, 5_000_25, "Made-up Fun", "Films");
-  earn("2024-02-11T10:00:00", ACCOUNTS.closed, 12_75, "Made-up Interest");
+  gain("2024-02-11T10:00:00", ACCOUNTS.closed, 12_75, "Made-up Interest");
   transfer("2024-03-01T10:00:00", ACCOUNTS.closed, ACCOUNTS.bank, 50_013_00);
 
   for (let year = 2024, month = 1; year < 2026 || month <= 5; month === 12 ? (year += 1, month = 1) : (month += 1)) {
@@ -159,12 +227,12 @@ export function makeSample(): Sample {
     transfer(day(27, "08:00:00"), ACCOUNTS.bank, ACCOUNTS.broker, between(20_000_00, 40_000_00));
 
     // Trap 1: market moves logged as income, including losses as negative income.
-    const gain = between(1_000_00, 9_000_00) * (month % 3 === 0 ? -1 : 1);
-    earn(day(28, "20:00:00"), ACCOUNTS.broker, gain, "Made-up Market Moves");
+    const move = between(1_000_00, 9_000_00) * (month % 3 === 0 ? -1 : 1);
+    gain(day(28, "20:00:00"), ACCOUNTS.broker, move, "Made-up Market Moves");
   }
 
   // Trap 2: a loan logged as income.
-  earn("2024-07-15T11:00:00", ACCOUNTS.bank, 300_000_00, "Made-up Loan");
+  income("loans", "2024-07-15T11:00:00", ACCOUNTS.bank, 300_000_00, "Made-up Loan");
 
   // Trap 3: large corrections, both ways.
   correctUp("2025-01-31T23:00:00", ACCOUNTS.broker, 180_000_00);
@@ -186,6 +254,7 @@ export function makeSample(): Sample {
     },
     -20_862_50,
   );
+  expect("2025-04-10T07:30:00", "spent", 20_862_50);
 
   // Trap 8: identical repeats are genuine, both spending and transfers.
   for (let copy = 0; copy < 3; copy += 1) {
@@ -196,6 +265,24 @@ export function makeSample(): Sample {
 
   // Trap 9: a large one-off.
   spend("2025-08-19T16:00:00", ACCOUNTS.bank, 900_000_00, "Made-up Car", "Purchase");
+
+  // Dividends, which sit with investment returns.
+  gain("2025-06-10T10:00:00", ACCOUNTS.broker, 4_250_50, "Made-up Dividends");
+  gain("2025-12-10T10:00:00", ACCOUNTS.fund, 1_100_25, "Made-up Dividends");
+
+  // A reimbursement account: corrections both ways show as Recovered, not as Saved.
+  transfer("2025-06-01T09:00:00", ACCOUNTS.bank, ACCOUNTS.reimbursement, 10_000_00);
+  spend("2025-06-02T09:00:00", ACCOUNTS.reimbursement, 6_000_00, "Made-up Travel", "Flights");
+  correctUp("2025-06-20T23:00:00", ACCOUNTS.reimbursement, 8_000_00);
+  correctDown("2025-07-20T23:00:00", ACCOUNTS.reimbursement, 3_250_75);
+
+  // A Business account, with its own income.
+  transfer("2025-07-01T09:00:00", ACCOUNTS.bank, ACCOUNTS.business, 50_000_00);
+  earn("2025-07-15T09:00:00", ACCOUNTS.business, 75_000_00, "Made-up Consulting");
+
+  // A move inside the Investments group, and money coming back out of it.
+  transfer("2025-10-01T09:00:00", ACCOUNTS.broker, ACCOUNTS.fund, 30_000_00);
+  transfer("2025-10-02T09:00:00", ACCOUNTS.broker, ACCOUNTS.bank, 15_000_00);
 
   // Text that must stay plain data.
   HOSTILE_NOTES.forEach((note, index) => {
@@ -244,6 +331,15 @@ export function makeSample(): Sample {
         balances.set(entry.account, (balances.get(entry.account) ?? 0) + change);
       }
       return balances;
+    },
+    expectedTotals(from, to, today = SAMPLE_TODAY) {
+      const totals: ExpectedTotals = {
+        earned: 0, spent: 0, investmentReturns: 0, loans: 0, recovered: 0, otherCorrections: 0, invested: 0,
+      };
+      for (const entry of expected) {
+        if (entry.date >= from && entry.date <= to && entry.date <= today) totals[entry.line] += entry.paise;
+      }
+      return totals;
     },
   };
 }

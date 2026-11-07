@@ -43,6 +43,26 @@ const TRAPS: ReadonlyArray<readonly [string, (rows: readonly SampleRow[]) => boo
 
 export const TRAP_COUNT = TRAPS.length;
 
+const onAccount = (row: SampleRow, name: string): boolean => row.account.includes(name);
+
+/** Cases the Phase 2 metrics need, checked the same way as the traps. */
+const SETUP_CASES: ReadonlyArray<readonly [string, (rows: readonly SampleRow[]) => boolean]> = [
+  ["Reimbursement correction up", (rows) => rows.some((row) => onAccount(row, "Reimbursements") && row.type === "Income Balance")],
+  ["Reimbursement correction down", (rows) => rows.some((row) => onAccount(row, "Reimbursements") && row.type === "Expense Balance")],
+  ["Business account", (rows) => rows.some((row) => onAccount(row, "Business"))],
+  ["Dividend income", (rows) => rows.some((row) => row.type === "Income" && row.category.includes("Dividends"))],
+  ["Transfer between investment accounts", (rows) =>
+    rows.some((row) => row.type === "Transfer-Out" && onAccount(row, "Broker") && row.secondAccount.includes("Fund"))],
+  ["Transfer out of investments", (rows) =>
+    rows.some((row) => row.type === "Transfer-Out" && onAccount(row, "Broker") && row.secondAccount.includes("Bank"))],
+];
+
+export const SETUP_CASE_COUNT = SETUP_CASES.length;
+
+export function findMissingSetupCases(rows: readonly SampleRow[]): string[] {
+  return SETUP_CASES.filter(([, isPresent]) => !isPresent(rows)).map(([name]) => name);
+}
+
 export function findMissingTraps(rows: readonly SampleRow[]): string[] {
   return TRAPS.filter(([, isPresent]) => !isPresent(rows)).map(([name]) => name);
 }
