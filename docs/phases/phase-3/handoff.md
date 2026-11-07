@@ -10,6 +10,7 @@
 | Fresh session start (2026-11-07) | 54% | 58% |
 | After specs, previews and Security's review (2026-11-07) | 77% | 62% |
 | After fixes and Security's re-check (2026-11-07) | 94% | 64% |
+| End of phase, after the README (2026-11-07) | 97% | 64% |
 | After Security's fixes and criteria check (2026-11-07) | 91% | 64% |
 
 ## State
