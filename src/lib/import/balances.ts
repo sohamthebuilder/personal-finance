@@ -10,12 +10,26 @@ const DIRECTION: ReadonlyMap<RowType, 1 | -1> = new Map<RowType, 1 | -1>([
   ["Transfer-Out", -1],
 ]);
 
-function dateOf(row: ImportRow): string {
+export function dateOf(row: ImportRow): string {
   return row.occurredAt.slice(0, 10);
 }
 
 export function isFutureDated(row: ImportRow, today: string): boolean {
   return dateOf(row) > today;
+}
+
+/**
+ * True if every amount, added up by size, stays a safe whole number. That one
+ * check covers any running balance, any total and any breakdown line, because
+ * none of them can be bigger than this sum.
+ */
+export function amountsAddUpSafely(rows: readonly ImportRow[]): boolean {
+  let total = 0;
+  for (const row of rows) {
+    total += Math.abs(row.amountPaise);
+    if (!Number.isSafeInteger(total)) return false;
+  }
+  return true;
 }
 
 /**

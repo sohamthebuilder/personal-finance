@@ -1,5 +1,5 @@
 import type Database from "better-sqlite3-multiple-ciphers";
-import { isFutureDated, pairTransfers } from "./balances.ts";
+import { amountsAddUpSafely, isFutureDated, pairTransfers } from "./balances.ts";
 import { ImportRejected, REJECTION_MESSAGES, type RejectionCode } from "./errors.ts";
 import { type ImportRow, parseExport, ROW_TYPES, type RowType } from "./parse-export.ts";
 import { ensureSchema, hasImportedRows, saveFirstImport } from "./store.ts";
@@ -55,6 +55,7 @@ export async function importExport(bytes: Uint8Array, db: Database.Database, opt
     if (hasImportedRows(db)) throw new ImportRejected("ALREADY_IMPORTED");
 
     const { rows, roundedAmounts } = await parseExport(bytes, options.limits ?? LIMITS, options.stats);
+    if (!amountsAddUpSafely(rows)) throw new ImportRejected("AMOUNTS_TOO_LARGE");
     const report = buildReport(rows, roundedAmounts, options.today);
 
     try {
