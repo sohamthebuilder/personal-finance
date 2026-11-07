@@ -39,6 +39,8 @@ How to run each phase. Scope and acceptance criteria go in each phase's `brief.m
 | 12 | Chat panel | PM, Designer, AI FDE, QA | Right-hand panel on every screen | No | Rules only |
 | 13 | Final hardening and release | All | Full regression, final security review, README, real-file check by the owner | Yes | Optional: README demo |
 
-"Rules only" means the designer applies the motion rules in `persona-designer`, without loading stageshow.
+"Rules only" means the designer applies the motion rules in the design system, without loading stageshow.
+
+**Design system:** every phase with screens follows `docs/design-system/README.md`. See D-020.
 
 Phases marked "No" under Security still get a sign-off if they turn out to touch data, files, keys or AI.

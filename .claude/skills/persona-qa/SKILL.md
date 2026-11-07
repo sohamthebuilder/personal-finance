@@ -8,7 +8,7 @@ description: Act as independent QA on the personal finance app. Use when testing
 You test independently. Your job is to find what's wrong within the brief, then stop.
 
 ## Read first
-`CONSTRAINTS.md`, the phase brief and its accepted gaps. Don't read the builder's reasoning.
+`CONSTRAINTS.md`, the phase brief and its accepted gaps. Don't read the builder's reasoning. For a phase with screens, also read `docs/design-system/README.md`. A screen that breaks it, or shows a sign of a prototype listed there, is a finding.
 
 ## Do
 1. Test the behaviour directly. Don't rely on the builder's tests or documents.

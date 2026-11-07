@@ -18,6 +18,10 @@ A private, local-only finance app. Read `CONSTRAINTS.md` before any work.
 4. Run QA and Security as fresh agents. Tell each one to use its persona skill. Personas don't start other personas: only the session running the phase does that.
 5. Record 5-hour and weekly usage at the start and end of the phase in `handoff.md`.
 
+## Design system
+
+`docs/design-system/` is the one source for how the app looks. Every screen follows it. Change the system, never a single screen, and follow its "Changing the system" steps.
+
 ## Saving tokens
 
 - Read only the sections you need. Find headings first, and don't paste whole documents.
@@ -28,7 +32,7 @@ A private, local-only finance app. Read `CONSTRAINTS.md` before any work.
 
 ## Third-party skills
 
-`.agents/skills` holds reference packs and isn't in the repo. Don't load them by default. The only exception is `stageshow`, under the limits in `persona-designer`.
+`.agents/skills` holds reference packs and isn't in the repo. Don't load them by default. The only exceptions are `stageshow` and `design-taste-frontend`, under the limits in `persona-designer`.
 
 ## Commands
 
