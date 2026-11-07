@@ -4,18 +4,29 @@ This describes the shape of the export. It comes only from section 2 of `docs/PR
 
 ## Layout
 
+- A true `.xlsx` file, confirmed by the owner's file type check on 2026-11-07.
 - One sheet with 12 columns.
 - There are no row IDs.
 - **Read columns by position, never by name,** because `Accounts` appears twice.
 
-| Column | What's known |
-|---|---|
-| `Accounts` | Appears twice |
-| `INR` | The amount used for all maths |
-| `Tag` | Effectively empty, so the app ignores it |
-| `Description` | Effectively empty, so the app ignores it |
+| Position | Column | What's known |
+|---|---|---|
+| 1 | `Period` | Date and time, shown like `30/11/2026, 04:26:01` (day first) |
+| 2 | `Accounts` | Account name |
+| 3 | `Category` | |
+| 4 | `Subcategory` | |
+| 5 | `Note` | Free text, treated as untrusted |
+| 6 | `INR` | The amount used for all maths. Positive for `Exp.` and `Transfer-Out` |
+| 7 | `Income/Expense` | The row type |
+| 8 | `Tag` | Effectively empty, so the app ignores it |
+| 9 | `Description` | Effectively empty, so the app ignores it |
+| 10 | `Amount` | Original amount, for reference |
+| 11 | `Currency` | Original currency, for reference |
+| 12 | `Accounts` | Also an account name. On a transfer it's the other account, confirmed by the owner |
 
-The positions of these columns, and the names of the other columns, aren't recorded in the brief. Neither is the exact text of the Income / Expense Balance row type. Phase 1 needs all of these before it can finalise the sample file. See question 1 in `docs/phases/phase-0/brief.md`.
+Both sides of a foreign-currency transfer show the same `INR` amount.
+
+The owner gave these details as text on 2026-11-07. No agent opened the file.
 
 ## Row types
 
@@ -24,7 +35,7 @@ The positions of these columns, and the names of the other columns, aren't recor
 | `Exp.` | Real spending |
 | `Income` | Salary and similar, mixed with market gain and loss rows |
 | `Transfer-In` / `Transfer-Out` | Moves between the owner's own accounts, always in matching pairs. Neither income nor spending |
-| Income / Expense Balance | Manual "Modified Bal." corrections, not real income or spending |
+| `Income Balance` / `Expense Balance` | Manual "Modified Bal." corrections, not real income or spending |
 
 Transfers pair up exactly and closed accounts come to zero, so balances and a net worth history can be rebuilt from the file.
 

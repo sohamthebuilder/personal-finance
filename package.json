@@ -13,7 +13,8 @@
     "start": "NEXT_TELEMETRY_DISABLED=1 NODE_ENV=production node server.ts",
     "app": "npm run build && npm run start",
     "typecheck": "tsc --noEmit",
-    "test": "node --test \"tests/**/*.test.ts\"",
+    "test": "node --test \"tests/**/*.test.ts\" && node scripts/check-leftovers.mjs",
+    "sample:check": "node scripts/sample-check.ts",
     "guard": "node scripts/data-guard.mjs --history",
     "prove:encryption": "node scripts/prove-encryption.ts"
   },
@@ -21,7 +22,9 @@
     "better-sqlite3-multiple-ciphers": "13.0.3",
     "next": "16.4.5",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "sax": "1.6.1",
+    "yauzl": "3.4.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "9.6.0",
