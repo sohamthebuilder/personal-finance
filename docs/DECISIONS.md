@@ -136,3 +136,10 @@ One entry per decision that later phases need to know. Newest at the bottom. No 
 - **Decision:** Everything from the PM and AI PM is a proposal until the owner accepts it in chat. Agents stop and wait for that, even in auto mode. Any later requirement change goes through the same gate.
 - **Why:** Checking requirements at the start prevents rework and unneeded changes later.
 - **Consequence:** A phase pauses until the owner replies. The approval is recorded in the brief, and builders check that record before they start. This is an instruction to agents, not a technical lock.
+
+## D-019: Excel reader
+
+- **Phase:** 1
+- **Decision:** Build a small in-house `.xlsx` reader on `yauzl` 3.4.0, `sax` 1.6.1 and `pend`, all pinned. No other new package without Security. None of the three has an install script, so D-004 needs no exception.
+- **Why:** Security rejected npm `xlsx`, `exceljs` and `read-excel-file` on known flaws, size, or missing limits. See `docs/phases/phase-1/security.md`.
+- **Consequence:** The reader stops on anything it doesn't recognise, so the real file may need shape-only fixes in Phase 13. This holds only if the export is a true `.xlsx`; an old `.xls` goes back to the owner (P4).
