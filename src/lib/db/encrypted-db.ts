@@ -28,12 +28,31 @@ export function saltPath(databasePath: string): string {
   return `${databasePath}.salt`;
 }
 
+/** Longest raw password, in code units, before any work is done on it. */
+export const MAX_RAW_PASSWORD_UNITS = 1024;
+
+/**
+ * The one form every password takes before hashing (Decision 5). NFKC folds
+ * full-width letters, ligatures and composed accents to one spelling, so the
+ * same password typed on another keyboard makes the same key. Fixed for good:
+ * changing it would make existing databases unreadable.
+ */
+export function normalisePassword(password: string): string {
+  if (password.length === 0) throw new Error("A password is required.");
+  if (password.length > MAX_RAW_PASSWORD_UNITS) throw new Error("The password is too long.");
+  if (!password.isWellFormed()) throw new Error("The password isn't well-formed text.");
+  return password.normalize("NFKC");
+}
+
 export function deriveKey(password: string, salt: Buffer): Promise<Buffer> {
-  if (password.length === 0) {
-    return Promise.reject(new Error("A password is required."));
+  let message: string;
+  try {
+    message = normalisePassword(password);
+  } catch (error) {
+    return Promise.reject(error);
   }
   return new Promise((resolve, reject) => {
-    argon2("argon2id", { message: password, nonce: salt, ...KDF_SETTINGS }, (error, key) => {
+    argon2("argon2id", { message, nonce: salt, ...KDF_SETTINGS }, (error, key) => {
       if (error) reject(error);
       else resolve(Buffer.from(key));
     });

@@ -1,0 +1,12 @@
+/*
+ * Google Sans Flex from the app's own files, never from Google (conditions 30, 31).
+ * One fixed path, woff2 only, no local() lookup. Until the file is added, the
+ * browser falls back to the Mac's system font listed in --font.
+ */
+@font-face {
+  font-family: "Google Sans Flex";
+  src: url("/fonts/google-sans-flex.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}

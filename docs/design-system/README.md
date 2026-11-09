@@ -103,6 +103,7 @@ All are in `system.css`, and shown in `gallery.html`.
 | Group of figures | `.card.stats`, `.stat` | One card split by lines, not separate boxes |
 | Rows | `.list`, `.pick-rows`, `.pick-row` | Lines between rows, no boxes |
 | Progress | `.meter` | Named stage beside it |
+| Command to copy | `.cmd` | One fixed line in the code font, with a small Copy button that reads "Copied" for 2 seconds. The text stays selectable if copying fails |
 | Confirmation | `.scrim`, `.dialog` | Say exactly what happens. Never the browser's own dialog |
 | Icon in a tile | `.glyph` | Neutral, for account groups and files |
 
@@ -176,3 +177,6 @@ The preview control sits in a corner, not on the screen, and is the only thing a
 | 2026-11-07 | 3 | Warm look from tasteskill.dev, Google Sans Flex, espresso panels, collapsible sidebar | Yes, 2026-11-07: "Approve the look" |
 | 2026-11-07 | 3 | Small fixes: `.shell` `overflow-x: clip`; at 480px or less, tighter `.seg span` and `.note > .btn-row` wraps under the text | Small fix, noted in the handoff |
 | 2026-11-07 | 3 | Light `accent` from `#C2410C` to `#BA3E0B`, so links pass 4.5 to 1 on `gain-soft`, `warn-soft` and `danger-soft` | Yes, 2026-11-07: "Approve all four" |
+| 2026-11-08 | 4 | New `.cmd` part and `--font-code` (the Mac's own code font, nothing downloaded) for the forgotten-password command. New `copy` and `trash` icons | Yes, 2026-11-08: "Yes, approve all" |
+| 2026-11-08 | 4 | Build helpers at the end of `system.css`: `.sprite`, a few spacing classes, `.steps`, `.with-glyph`, `.meter` step widths, `.menu`, `.date-row`, and no underline on links styled as `.btn` or `.pop__opt`. They hold the approved previews' inline spacings, because the app can't use `style="..."` (D-010). No change to how anything looks | Small fix, noted in the handoff |
+| 2026-11-08 | 4 | Small fix: the header picker width rules now read `.top > .picker`, so they reach only the header's own period picker and not the date pickers in the "Choose a period" dialog, which sits inside the header (QA Q4-1). No change to how anything looks | Small fix, noted in the handoff |

@@ -63,6 +63,7 @@
   --t-display: 44px; --t-h1: 32px; --t-h2: 18px; --t-figure: 26px; --t-body: 15px; --t-label: 13px;
   --m-in: 140ms; --m-out: 200ms; --m-press: 90ms; --m-step: 180ms; --m-slide: 240ms; --m-bar: 400ms; --m-roll: 500ms;
   --ease: cubic-bezier(.2, .8, .2, 1);
+  --font-code: ui-monospace, "SF Mono", Menlo, monospace;
   --font: "Google Sans Flex", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -191,6 +192,11 @@ svg.i { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor;
 .delta { display: inline-flex; align-items: center; gap: 4px; font-size: var(--t-label); font-weight: 500; color: var(--ink-2); }
 .delta--up { color: var(--gain); }
 
+/* Command to copy: one line of fixed text with a Copy button. Text stays selectable. */
+.cmd { display: flex; align-items: center; gap: var(--s-2); padding: 6px 6px 6px var(--s-4); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-control); }
+.cmd code { flex: 1; min-width: 0; font: 500 14px/1.5 var(--font-code); color: var(--ink); overflow-wrap: anywhere; user-select: all; -webkit-user-select: all; }
+.cmd .btn { flex: none; }
+
 /* ---------- Dialog ---------- */
 .scrim { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: var(--s-4); background: rgba(20, 10, 5, .5); animation: fade var(--m-out) var(--ease); }
 .dialog { width: 100%; max-width: 420px; padding: var(--s-5); background: var(--surface); border-radius: var(--r-card); box-shadow: var(--shadow-pop); animation: rise var(--m-out) var(--ease); }
@@ -253,7 +259,7 @@ svg.i { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor;
 .side :focus-visible { outline-color: var(--rail-ink); }
 .top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: var(--s-2); min-height: 64px; padding: var(--s-2) var(--s-6); background: var(--bg); border-bottom: 1px solid var(--line); }
 .top h1 { font-size: 22px; letter-spacing: -.03em; margin-right: auto; }
-.top .picker { width: 164px; }
+.top > .picker { width: 164px; }
 .page { padding: var(--s-5) var(--s-6) var(--s-7); max-width: 1160px; margin: 0 auto; overflow-x: clip; }
 .tabbar { display: none; }
 .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--s-4); }
@@ -311,7 +317,7 @@ svg.i { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor;
   .card { padding: var(--s-4); }
   .stat { padding: var(--s-3) var(--s-4); }
   .top h1 { font-size: 17px; }
-  .top .picker { width: 132px; }
+  .top > .picker { width: 132px; }
 }
 
 /* ---------- Choice rows: setup lists ---------- */
@@ -338,5 +344,35 @@ svg.i { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor;
   .note__body { flex-basis: 0; }
   .note > .btn-row { flex-basis: 100%; margin-left: var(--s-6); }
   .top h1 { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
-  .top .picker { flex: 1; width: auto; }
+  .top > .picker { flex: 1; width: auto; }
 }
+
+/* ---------- Build helpers (Phase 4) ----------
+   The app can't use style="..." (D-010), so the previews' few inline
+   spacings live here as classes. Same values the approved previews use. */
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.mt-4 { margin-top: var(--s-4); }
+.mt-5 { margin-top: var(--s-5); }
+.mb-1 { margin-bottom: var(--s-1); }
+.mb-4 { margin-bottom: var(--s-4); }
+.mb-5 { margin-bottom: var(--s-5); }
+.note--lede { margin: var(--s-3) 0 var(--s-5); }
+.label--section { margin: var(--s-4) 0 var(--s-1); }
+.fine-print { margin-top: var(--s-4); line-height: 1.5; }
+.card__intro { margin: var(--s-2) 0 var(--s-4); }
+.with-glyph { display: flex; gap: var(--s-3); align-items: center; min-width: 0; }
+.steps > li { justify-content: flex-start; align-items: flex-start; gap: var(--s-3); }
+.steps__text { flex: 1; min-width: 0; padding-top: 7px; }
+.steps__lead { display: block; margin-bottom: var(--s-2); }
+.steps .field__hint { display: block; }
+.meter > [data-step="1"] { width: 25%; }
+.meter > [data-step="2"] { width: 50%; }
+.meter > [data-step="3"] { width: 75%; }
+.meter > [data-step="4"] { width: 100%; }
+.menu { position: relative; }
+.menu > .pop { left: auto; right: 0; }
+/* Buttons and menu items that are links look the same as the button kind. */
+a.btn, a.pop__opt { text-decoration: none; }
+a.pop__opt { color: var(--ink); }
+/* Day, month and year pickers under one label, in the Custom period dialog. */
+.date-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1.2fr); gap: var(--s-2); }

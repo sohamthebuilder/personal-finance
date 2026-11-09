@@ -171,3 +171,21 @@ One entry per decision that later phases need to know. Newest at the bottom. No 
 - **Decision:** The owner chose the look and feel of tasteskill.dev: cream, espresso, orange and the Google Sans Flex font. We take the style only, and copy none of its code, images, words or logo. The main button is espresso, not orange, so it can't be mistaken for a warning.
 - **Why:** The owner found the green design only okay and pointed to this site.
 - **Consequence:** Google Sans Flex (open licence) replaces the system font. The app serves it from its own files, so nothing is fetched from Google and brief section 10 still holds. Phase 4 adds the font file, and Security checks it. Previews load it from Google Fonts for review only.
+
+## D-024: Google Sans Flex file in the app
+
+- **Phase:** 4
+- **Decision:** The app serves one font file, `public/fonts/google-sans-flex.woff2` (30,024 bytes), with `public/fonts/OFL.txt` beside it. The owner approved the download on 2026-11-08: "Yes, download both".
+- **Source:** `github.com/google/fonts`, commit `bd8f81ddb5c74d5c8897b36ad88b440266245103`, folder `ofl/googlesansflex`. Original `GoogleSansFlex[ROND,opsz,slnt,wdth,wght].ttf`, 3,910,784 bytes, SHA-256 `a9ac770798857d5e8ac593ced42b22e40a7c08cec98319f92b0eccc2783a77ba`. `OFL.txt` SHA-256 `fc13d69f63e36d284b6e383d4d1463d8ad404f0aa065e57cf961252d51063137`.
+- **How it was cut down:** fontTools 4.60.1 with brotli 1.1.0, run once outside the repo. Weight kept as a range from 400 to 700. Optical size, width, roundness and slant fixed at their defaults. Characters kept: basic Latin, Latin-1, general punctuation, ₹ (U+20B9), minus (U+2212) and arrows (U+2190 to U+2193). Saved as `woff2`.
+- **Result SHA-256:** `cf07d17736e1a0bb75bab9a092246b5afb4eae5d702520f78a5309a9dfe11916`.
+- **Licence:** SIL Open Font License 1.1, no Reserved Font Name, so the cut-down file can keep its name.
+- **Consequence:** Nothing is fetched from Google. Security checks the file at sign-off (condition 30).
+
+## D-025: Common-password list
+
+- **Phase:** 4
+- **Decision:** The app refuses passwords on `src/lib/auth/common-passwords.txt`, which ships in the repo and is read only by the server. The owner approved the download on 2026-11-08: "Yes to both".
+- **Source:** SecLists, `github.com/danielmiessler/SecLists`, commit `12274c98fdebe98c7a7284914436a472ed469aed`, file `Passwords/Common-Credentials/Pwdb_top-1000000.txt`, 8,755,171 bytes, SHA-256 `e9a88f67aafe65496682dc374559ee714e978bee50314767494c3e37a18c9fc8`. Licence MIT, copied beside the list as `common-passwords.LICENSE`.
+- **How it was cut down:** each line NFKC-normalised and lowercased, then kept only if it has 15 to 256 characters, no broken characters and no control characters. Duplicates removed. The 40 Phase 4A starter entries kept. Result: 5,348 lines, 94,740 bytes, SHA-256 `c3fe0385cbbd6169aa6af3533c2d238249a626b1795064011fd4bd60a90a14d1`.
+- **Consequence:** No online lookup. The data guard passes on the file unchanged.
