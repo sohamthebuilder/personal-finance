@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 170" width="1200" height="170" role="img" aria-label="Build progress: phases 0 to 3 done, phase 4 next, phases 5 to 13 planned">
+  <rect width="1200" height="170" rx="20" fill="#1F140D"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif">
+    <text x="40" y="44" fill="#FFF6EF" font-size="20" font-weight="700">Build progress</text>
+    <text x="1160" y="44" text-anchor="end" fill="#C4B4A7" font-size="16">4 of 14 phases done</text>
+
+    <!-- 14 segments: x = 40 + i*80, width 72 -->
+    <g>
+      <rect x="40"  y="66" width="72" height="20" rx="6" fill="#FF8A47"/>
+      <rect x="120" y="66" width="72" height="20" rx="6" fill="#FF8A47"/>
+      <rect x="200" y="66" width="72" height="20" rx="6" fill="#FF8A47"/>
+      <rect x="280" y="66" width="72" height="20" rx="6" fill="#FF8A47"/>
+      <rect x="360" y="66" width="72" height="20" rx="6" fill="#40200F" stroke="#FF8A47" stroke-width="2" stroke-dasharray="5 4"/>
+      <rect x="440" y="66" width="72" height="20" rx="6" fill="#33231A"/>
+      <rect x="520" y="66" width="72" height="20" rx="6" fill="#33231A"/>
+      <rect x="600" y="66" width="72" height="20" rx="6" fill="#33231A"/>
+      <rect x="680" y="66" width="72" height="20" rx="6" fill="#33231A"/>
+      <rect x="760" y="66" width="72" height="20" rx="6" fill="#33231A"/>
+      <rect x="840" y="66" width="72" height="20" rx="6" fill="#33231A"/>
+      <rect x="920" y="66" width="72" height="20" rx="6" fill="#33231A"/>
+      <rect x="1000" y="66" width="72" height="20" rx="6" fill="#33231A"/>
+      <rect x="1080" y="66" width="80" height="20" rx="6" fill="#33231A"/>
+    </g>
+
+    <g font-size="13" fill="#C4B4A7" text-anchor="middle">
+      <text x="76" y="108">0</text><text x="156" y="108">1</text><text x="236" y="108">2</text><text x="316" y="108">3</text>
+      <text x="396" y="108" fill="#FF8A47">4</text><text x="476" y="108">5</text><text x="556" y="108">6</text><text x="636" y="108">7</text>
+      <text x="716" y="108">8</text><text x="796" y="108">9</text><text x="876" y="108">10</text><text x="956" y="108">11</text>
+      <text x="1036" y="108">12</text><text x="1120" y="108">13</text>
+    </g>
+
+    <!-- group labels -->
+    <g font-size="14">
+      <line x1="40" y1="122" x2="352" y2="122" stroke="#FF8A47" stroke-width="2"/>
+      <text x="40" y="146" fill="#FFF6EF">Foundation, import, maths, design</text>
+      <line x1="360" y1="122" x2="752" y2="122" stroke="#6A5C52" stroke-width="2"/>
+      <text x="360" y="146" fill="#C4B4A7">Login, upload and four dashboards</text>
+      <line x1="760" y1="122" x2="1072" y2="122" stroke="#6A5C52" stroke-width="2"/>
+      <text x="760" y="146" fill="#C4B4A7">AI rules, evals and chat</text>
+      <line x1="1080" y1="122" x2="1160" y2="122" stroke="#6A5C52" stroke-width="2"/>
+      <text x="1080" y="146" fill="#C4B4A7">Real-file test</text>
+    </g>
+  </g>
+</svg>
