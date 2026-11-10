@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360" role="img" aria-label="Personal Finance: your money, explained, on your own Mac">
+  <defs>
+    <radialGradient id="glow" cx="82%" cy="100%" r="70%">
+      <stop offset="0" stop-color="#FF8A47" stop-opacity="0.55"/>
+      <stop offset="0.45" stop-color="#BA3E0B" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#140A05" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FF8A47" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#FF8A47" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="360" rx="24" fill="#140A05"/>
+  <rect width="1200" height="360" rx="24" fill="url(#glow)"/>
+
+  <!-- logo mark -->
+  <rect x="64" y="64" width="56" height="56" rx="14" fill="#FFF6EF"/>
+  <rect x="80" y="94" width="6" height="14" rx="3" fill="#140A05"/>
+  <rect x="89" y="86" width="6" height="22" rx="3" fill="#140A05"/>
+  <rect x="98" y="78" width="6" height="30" rx="3" fill="#140A05"/>
+
+  <text x="64" y="186" fill="#FFF6EF" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" font-size="56" font-weight="700" letter-spacing="-1">Personal Finance</text>
+  <text x="64" y="232" fill="#C4B4A7" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" font-size="24">Your money, explained. On your own Mac, and nowhere else.</text>
+
+  <!-- chips -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" font-size="16" fill="#FFF6EF">
+    <rect x="64" y="268" width="128" height="36" rx="18" fill="#2A1C13" stroke="#40200F"/>
+    <text x="128" y="292" text-anchor="middle">🔒 Local-only</text>
+    <rect x="204" y="268" width="138" height="36" rx="18" fill="#2A1C13" stroke="#40200F"/>
+    <text x="273" y="292" text-anchor="middle">🧮 Exact maths</text>
+    <rect x="354" y="268" width="156" height="36" rx="18" fill="#2A1C13" stroke="#40200F"/>
+    <text x="432" y="292" text-anchor="middle">💬 Chat, later</text>
+  </g>
+
+  <!-- net worth sparkline -->
+  <g transform="translate(760 70)">
+    <text x="0" y="0" fill="#C4B4A7" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" font-size="16">Net worth</text>
+    <text x="0" y="46" fill="#FFF6EF" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" font-size="40" font-weight="700">₹18,42,350</text>
+    <text x="0" y="76" fill="#7FD49A" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" font-size="16">+₹1,02,440 this month</text>
+    <path d="M0 230 L60 226 L120 220 L180 214 L240 204 L300 196 L360 176 L380 166 L380 260 L0 260 Z" fill="url(#area)"/>
+    <path d="M0 230 L60 226 L120 220 L180 214 L240 204 L300 196 L360 176 L380 166" fill="none" stroke="#FFF6EF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="380" cy="166" r="6" fill="#FFF6EF"/>
+  </g>
+  <text x="1136" y="336" text-anchor="end" fill="#6A5C52" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" font-size="12">Made-up sample data</text>
+</svg>
