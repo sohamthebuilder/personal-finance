@@ -4,7 +4,7 @@
 
 <p align="center">
   <img alt="Phase 4 of 14" src="https://img.shields.io/badge/phase-4%20of%2014-FF8A47?style=flat-square">
-  <img alt="335 tests passing" src="https://img.shields.io/badge/tests-335%20passing-2E7D4F?style=flat-square">
+  <img alt="432 tests passing" src="https://img.shields.io/badge/tests-432%20passing-2E7D4F?style=flat-square">
   <img alt="Local only" src="https://img.shields.io/badge/data-local%20only-1F140D?style=flat-square">
   <img alt="0 known vulnerabilities" src="https://img.shields.io/badge/vulnerabilities-0-2E7D4F?style=flat-square">
   <img alt="Node 24.7 or newer" src="https://img.shields.io/badge/node-%E2%89%A524.7-6A5C52?style=flat-square">
@@ -27,7 +27,7 @@
 | ![Review screen showing new, changed and removed rows](docs/images/update-review.png) | ![Setup screen for grouping accounts](docs/images/setup.png) |
 
 > [!NOTE]
-> These are design previews with made-up data, not the running app yet. The import, the money calculations and the design of every screen are finished. The screens themselves get built from Phase 4.
+> These are design previews with made-up data. The import, the money calculations and the design of every screen are finished. In the running app so far, you can create a password, log in, lock it and delete your data. Upload and the dashboards come next.
 
 ## 🧭 What it does
 
@@ -98,11 +98,11 @@ flowchart LR
 | 🛡️ **Data guard** | Hooks and checks block spreadsheets, databases and secrets. All test data is generated | Real data can't reach the repo or the AI during the build |
 | 🎨 **Design system first** | One system decides how every screen looks. Changes go to it, never to a single screen | Screens stay consistent, and later phases can't drift |
 
-Decisions are logged as they happen. There are 23 so far, in [`docs/DECISIONS.md`](docs/DECISIONS.md).
+Decisions are logged as they happen. There are 25 so far, in [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 ## 📈 Progress so far
 
-<img src="docs/images/readme-progress.svg" alt="Build progress: phases 0 to 3 done, phase 4 next, phases 5 to 13 planned" width="100%">
+<img src="docs/images/readme-progress.svg" alt="Build progress: phases 0 to 3 done, phase 4 half done, phases 5 to 13 planned" width="100%">
 
 | Phase | What it delivered | Result |
 |---|---|---|
@@ -110,22 +110,25 @@ Decisions are logged as they happen. There are 23 so far, in [`docs/DECISIONS.md
 | ✅ 1. Sample data and import | Generated test data, and a hardened file reader | QA's first run found 1 Blocker and 3 Majors, all closed before merge |
 | ✅ 2. Setup and metrics | Earned, spent, saved and net worth logic | QA passed all 27 criteria, with no Blocker or Major |
 | ✅ 3. Flows and screens | 16 screens specified, a design system, 3 clickable previews | 23 criteria checked and owner signed off. Security caught 2 Blockers and 6 Majors, all fixed |
-| 🔜 4 to 8 | Login and upload, then the four dashboards | Next |
+| ✅ 4A. Getting in safely | Create password, log in with slow-down, auto-lock, the app shell, delete my data, the forgotten-password wipe | QA found 1 Blocker, fixed and re-tested. Security signed off with no Blocker or Major. Owner signed off |
+| 🔜 4B. Upload and setup | First upload, setup, summary, update with preview, one-step undo | Next |
+| 🗓️ 5 to 8 | The four dashboards | Planned |
 | 🗓️ 9 to 12 | AI rules and evals, then provider, tools and chat | Planned |
 | 🗓️ 13 | Final hardening, and the owner's real-file check | Planned |
 
-Today: **335** automated tests passing · **0** known dependency vulnerabilities · a clean data guard.
+Today: **432** automated tests passing · **0** known dependency vulnerabilities · a clean data guard.
 
 ### 🎯 What the process has caught
 
 - **A merge that looked fine.** QA's first Phase 1 run blocked it. The core held up against hostile files; the faults were at the edges.
 - **"Looks like a prototype."** The owner rejected the first screens. That led to a real design system and a written quality bar, before any screen was built.
 - **Bugs caught while still just words.** In Phase 3, Security found the app could say "You're logged out" with the session still live, and a half-finished delete could leave the app stuck. Fixing a sentence is far cheaper than fixing code.
+- **A small Blocker before it shipped.** In Phase 4A, QA found the date pickers in "Choose a period" overlapping on wide windows. It was fixed and re-checked by a fresh QA agent before merge.
 - **A budget line that worked.** Phase 3 ran from 50 to 90 points. Work stopped at the line, and the owner chose to raise it. Design took more than planned, a useful input for later phases.
 
 ### ⚠️ Known limits, stated plainly
 
-- Most of the product isn't built yet. No screen runs in the app so far.
+- Most of the product isn't built yet. Only the password, log in, lock and delete screens run so far, with a placeholder Overview.
 - Nothing has been tested on real data, on purpose, until Phase 13.
 - There's no password reset, because a reset would be a back door. A forgotten password means starting again from the latest export.
 - Backups of the Mac can still hold old encrypted copies after a delete.

@@ -1,8 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 170" width="1200" height="170" role="img" aria-label="Build progress: phases 0 to 3 done, phase 4 next, phases 5 to 13 planned">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 170" width="1200" height="170" role="img" aria-label="Build progress: phases 0 to 3 done, phase 4 half done, phases 5 to 13 planned">
   <rect width="1200" height="170" rx="20" fill="#1F140D"/>
   <g font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif">
     <text x="40" y="44" fill="#FFF6EF" font-size="20" font-weight="700">Build progress</text>
-    <text x="1160" y="44" text-anchor="end" fill="#C4B4A7" font-size="16">4 of 14 phases done</text>
+    <text x="1160" y="44" text-anchor="end" fill="#C4B4A7" font-size="16">4½ of 14 phases done</text>
 
     <!-- 14 segments: x = 40 + i*80, width 72 -->
     <g>
@@ -11,6 +11,7 @@
       <rect x="200" y="66" width="72" height="20" rx="6" fill="#FF8A47"/>
       <rect x="280" y="66" width="72" height="20" rx="6" fill="#FF8A47"/>
       <rect x="360" y="66" width="72" height="20" rx="6" fill="#40200F" stroke="#FF8A47" stroke-width="2" stroke-dasharray="5 4"/>
+      <rect x="361" y="67" width="35" height="18" rx="5" fill="#FF8A47"/>
       <rect x="440" y="66" width="72" height="20" rx="6" fill="#33231A"/>
       <rect x="520" y="66" width="72" height="20" rx="6" fill="#33231A"/>
       <rect x="600" y="66" width="72" height="20" rx="6" fill="#33231A"/>
