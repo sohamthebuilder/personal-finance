@@ -39,7 +39,7 @@ export function ForgotPanel() {
           <span className="glyph num">2</span>
           <span className="steps__text">
             <span className="steps__lead">
-              Then paste this into Terminal and press Return. It lists what it will delete and asks you to type DELETE.
+              Then, in that same Terminal window, paste this and press Return. It lists what it will delete and asks you to type DELETE.
             </span>
             <span className="cmd">
               <code>{WIPE_COMMAND}</code>

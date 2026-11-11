@@ -47,19 +47,33 @@ export const SAMPLE_SETUP = {
     { account: ACCOUNTS.reimbursement, group: "Money with others" },
     { account: ACCOUNTS.business, group: "Business" },
   ],
-  returnCategories: ["Made-up Market Moves", "Made-up Interest", "Made-up Dividends"],
-  loanCategories: ["Made-up Loan"],
-  reimbursementAccount: ACCOUNTS.reimbursement,
-  trendsStartDate: "2024-01-01",
+  /** Owner-named groups. Every income row counts as Earned, whatever its group. */
+  incomeGroups: {
+    names: ["Work", "Savings", "Borrowed"],
+    placed: [
+      { category: "Made-up Salary", group: "Work" },
+      { category: "Made-up Consulting", group: "Work" },
+      { category: "Made-up Market Moves", group: "Savings" },
+      { category: "Made-up Interest", group: "Savings" },
+      { category: "Made-up Dividends", group: "Savings" },
+      { category: "Made-up Loan", group: "Borrowed" },
+    ],
+  },
+  expenseGroups: {
+    names: ["Needs", "Wants"],
+    placed: [
+      { category: "Made-up Food", group: "Needs" },
+      { category: "Made-up Home", group: "Needs" },
+      { category: "Made-up Fun", group: "Wants" },
+      { category: "Made-up Travel", group: "Wants" },
+    ],
+  },
 } as const;
 
 /** Each line's total in paise. */
 export interface ExpectedTotals {
   earned: number;
   spent: number;
-  investmentReturns: number;
-  loans: number;
-  recovered: number;
   otherCorrections: number;
   invested: number;
 }
@@ -175,16 +189,14 @@ export function makeSample(): Sample {
   const earn = (at: string, account: string, paise: number, category: string, note = ""): void =>
     income("earned", at, account, paise, category, note);
   const gain = (at: string, account: string, paise: number, category: string): void =>
-    income("investmentReturns", at, account, paise, category);
-  const correctionLine = (account: string): keyof ExpectedTotals =>
-    account === ACCOUNTS.reimbursement ? "recovered" : "otherCorrections";
+    income("earned", at, account, paise, category);
   const correctUp = (at: string, account: string, paise: number): void => {
     add({ at, account, paise, type: "Income Balance", category: "Modified Bal.", note: "Modified Bal." }, paise);
-    expect(at, correctionLine(account), paise);
+    expect(at, "otherCorrections", paise);
   };
   const correctDown = (at: string, account: string, paise: number): void => {
     add({ at, account, paise, type: "Expense Balance", category: "Modified Bal.", note: "Modified Bal." }, -paise);
-    expect(at, correctionLine(account), -paise);
+    expect(at, "otherCorrections", -paise);
   };
 
   function transfer(at: string, from: string, to: string, paise: number, foreign?: { amount: number; currency: string }): void {
@@ -232,7 +244,7 @@ export function makeSample(): Sample {
   }
 
   // Trap 2: a loan logged as income.
-  income("loans", "2024-07-15T11:00:00", ACCOUNTS.bank, 300_000_00, "Made-up Loan");
+  income("earned", "2024-07-15T11:00:00", ACCOUNTS.bank, 300_000_00, "Made-up Loan");
 
   // Trap 3: large corrections, both ways.
   correctUp("2025-01-31T23:00:00", ACCOUNTS.broker, 180_000_00);
@@ -270,7 +282,7 @@ export function makeSample(): Sample {
   gain("2025-06-10T10:00:00", ACCOUNTS.broker, 4_250_50, "Made-up Dividends");
   gain("2025-12-10T10:00:00", ACCOUNTS.fund, 1_100_25, "Made-up Dividends");
 
-  // A reimbursement account: corrections both ways show as Recovered, not as Saved.
+  // An account for money paid back: its corrections count with Other corrections.
   transfer("2025-06-01T09:00:00", ACCOUNTS.bank, ACCOUNTS.reimbursement, 10_000_00);
   spend("2025-06-02T09:00:00", ACCOUNTS.reimbursement, 6_000_00, "Made-up Travel", "Flights");
   correctUp("2025-06-20T23:00:00", ACCOUNTS.reimbursement, 8_000_00);
@@ -334,7 +346,7 @@ export function makeSample(): Sample {
     },
     expectedTotals(from, to, today = SAMPLE_TODAY) {
       const totals: ExpectedTotals = {
-        earned: 0, spent: 0, investmentReturns: 0, loans: 0, recovered: 0, otherCorrections: 0, invested: 0,
+        earned: 0, spent: 0, otherCorrections: 0, invested: 0,
       };
       for (const entry of expected) {
         if (entry.date >= from && entry.date <= to && entry.date <= today) totals[entry.line] += entry.paise;

@@ -25,6 +25,8 @@ export function LogIn({ mode, wait: waitAtLoad = 0 }: { mode: LogInMode; wait?: 
   const [cantOpen, setCantOpen] = useState(mode.kind === "cant-open");
   const [wait, setWait] = useState(waitAtLoad);
   const [busy, setBusy] = useState(false);
+  // A ref, because state only changes on the next draw and a second Return can arrive before it (S4-14).
+  const sending = useRef(false);
   const [forgot, setForgot] = useState(mode.kind === "files-incomplete");
 
   useEffect(() => {
@@ -35,7 +37,8 @@ export function LogIn({ mode, wait: waitAtLoad = 0 }: { mode: LogInMode; wait?: 
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (busy || wait > 0) return;
+    if (sending.current || busy || wait > 0) return;
+    sending.current = true;
     setVisible(false);
     const password = input.current?.value ?? "";
     // The field goes back to hidden and empty on submit (S3-16).
@@ -44,6 +47,7 @@ export function LogIn({ mode, wait: waitAtLoad = 0 }: { mode: LogInMode; wait?: 
     setError(null);
     setCantOpen(false);
     const answer = await postForm("/api/login", { password });
+    sending.current = false;
     setBusy(false);
     if (answer.status === 200 && answer.body.ok === true) {
       const next = typeof answer.body.next === "string" && RETURN_SCREENS.has(answer.body.next) ? answer.body.next : "/";

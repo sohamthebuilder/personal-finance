@@ -333,8 +333,8 @@ svg.i { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor;
 .pick-rows { border-top: 1px solid var(--line); }
 .pick-row { display: grid; grid-template-columns: auto minmax(0, 1fr) 208px; gap: var(--s-3); align-items: center; padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
 .pick-row--plain { grid-template-columns: minmax(0, 1fr) 280px; }
-.pick-row__name { font-weight: 500; display: flex; flex-wrap: wrap; gap: 2px var(--s-2); align-items: center; }
-.pick-row__sub { font-size: var(--t-label); color: var(--ink-2); }
+.pick-row__name { font-weight: 500; display: flex; flex-wrap: wrap; gap: 2px var(--s-2); align-items: center; overflow-wrap: anywhere; }
+.pick-row__sub { font-size: var(--t-label); color: var(--ink-2); overflow-wrap: anywhere; }
 .pick-row .field__error { grid-column: 1 / -1; margin-top: 0; justify-self: end; }
 .only-narrow { display: none !important; }
 @media (max-width: 860px) {
@@ -385,6 +385,57 @@ a.btn, a.pop__opt { text-decoration: none; }
 a.pop__opt { color: var(--ink); }
 /* Day, month and year pickers under one label, in the Custom period dialog. */
 .date-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1.2fr); gap: var(--s-2); }
+
+/* ---------- Long setup lists (Phase 4, setup change) ----------
+   Groups that open and close, a search field, naming in place,
+   and a save bar that stays in reach on a long page. */
+.folds { border-top: 1px solid var(--line); }
+.fold { border-bottom: 1px solid var(--line); }
+.fold__head { display: flex; align-items: center; gap: var(--s-2); }
+.fold__btn { flex: 1; min-width: 0; min-height: 60px; display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-2) var(--s-3) 0; background: none; border: 0; border-radius: var(--r-control); text-align: left; cursor: pointer; }
+.fold__btn[disabled] { cursor: default; }
+.fold__text { flex: 1; min-width: 0; }
+.fold__name { display: block; font-weight: 500; overflow-wrap: anywhere; }
+.fold__sum { display: block; font-size: var(--t-label); color: var(--ink-2); }
+.fold__chev { color: var(--ink-2); transition: transform var(--m-out) var(--ease), color var(--m-in) var(--ease); }
+.fold__btn:hover .fold__chev { color: var(--ink); }
+.fold__btn[aria-expanded="true"] .fold__chev { transform: rotate(180deg); }
+.fold__body { padding: 0 0 var(--s-2) var(--s-5); animation: drop var(--m-out) var(--ease); }
+.fold--glyph .fold__body { padding-left: var(--s-7); }
+.fold__body .pick-rows { border-top: 1px solid var(--line); }
+.fold__body .pick-row:last-child { border-bottom: 0; }
+.fold__empty { padding: var(--s-3) 0; border-top: 1px solid var(--line); font-size: var(--t-label); color: var(--ink-2); }
+.search { position: relative; margin-bottom: var(--s-3); }
+.search > .i { position: absolute; left: var(--s-4); top: 15px; color: var(--ink-2); pointer-events: none; }
+.search .input { padding-left: calc(var(--s-4) + 18px + var(--s-2)); padding-right: var(--s-7); }
+.search .input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+[hidden] { display: none !important; }
+.search__count:empty { display: none; }
+.search__count { margin-bottom: var(--s-3); font-size: var(--t-label); color: var(--ink-2); }
+.search__none { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-1) var(--s-2); padding: var(--s-5) 0; border-top: 1px solid var(--line); color: var(--ink-2); text-align: center; }
+.inline-edit { padding: var(--s-3) 0; }
+.inline-edit__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.inline-edit__row .input { flex: 1 1 200px; width: auto; min-width: 0; }
+.add-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); padding-top: var(--s-3); }
+.add-row .field__hint { margin: 0; }
+.savebar { position: static; bottom: var(--s-4); z-index: 15; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); margin-top: var(--s-5); padding: var(--s-3) var(--s-3) var(--s-3) var(--s-5); background: var(--surface); border-radius: var(--r-card); box-shadow: var(--shadow-pop); }
+.savebar.is-dirty, .savebar.is-ok, .savebar.is-bad { position: sticky; }
+.savebar__text { flex: 1 1 auto; min-width: 0; display: flex; gap: var(--s-2); align-items: center; color: var(--ink-2); }
+.savebar.is-dirty .savebar__text, .savebar.is-ok .savebar__text, .savebar.is-bad .savebar__text { color: var(--ink); font-weight: 500; }
+.savebar.is-ok .savebar__text > .i { color: var(--gain); }
+.savebar.is-bad .savebar__text > .i { color: var(--danger); }
+.savebar__text:focus { outline: none; }
+@media (max-width: 860px) {
+  .savebar { bottom: calc(var(--s-8) + var(--s-3)); }
+}
+@media (max-width: 560px) {
+  .fold__body, .fold--glyph .fold__body { padding-left: var(--s-4); }
+}
+@media (max-width: 480px) {
+  .savebar { padding-left: var(--s-4); }
+  .savebar__text { flex-basis: 100%; }
+  .savebar .btn { flex: 1 1 0; }
+}
 </style>
 <style>
 /* Preview control only. Not part of the app. */
@@ -424,6 +475,9 @@ a.pop__opt { color: var(--ink); }
 <symbol id="i-fold" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15M16 9.5L13.5 12l2.5 2.5"/></symbol>
 <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.500 8.500V6.500a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/></symbol>
 <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.500 7h15M10 7V5h4v2M6.500 7l1 12a2 2 0 0 0 2 1.800h5a2 2 0 0 0 2-1.800l1-12M10.500 11v6M13.500 11v6"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
 </defs></svg>
 <div id="app"></div>
 <div class="pv" id="pv"></div>
@@ -449,7 +503,7 @@ function forgot(){return `<div class="card enter" id="fp" style="margin-top:24px
  <p class="muted" style="margin:8px 0 16px">There's no reset, because a reset would be a way in for anyone else.</p>
  <ol class="list">
   <li><span style="display:flex;gap:12px;align-items:flex-start;min-width:0"><span class="glyph num">1</span><span style="padding-top:7px">To start again, stop the app by pressing Control-C in its Terminal window.</span></span></li>
-  <li><span style="display:flex;gap:12px;align-items:flex-start;min-width:0;flex:1"><span class="glyph num">2</span><span style="padding-top:7px;flex:1;min-width:0"><span style="display:block;margin-bottom:8px">Then paste this into Terminal and press Return. It lists what it will delete and asks you to type DELETE.</span>
+  <li><span style="display:flex;gap:12px;align-items:flex-start;min-width:0;flex:1"><span class="glyph num">2</span><span style="padding-top:7px;flex:1;min-width:0"><span style="display:block;margin-bottom:8px">Then, in that same Terminal window, paste this and press Return. It lists what it will delete and asks you to type DELETE.</span>
    <span class="cmd"><code id="cmd">${CMD}</code><button class="btn btn--sm" type="button" id="copy">${ic('copy')}<span>Copy</span></button></span>
    <span class="field__hint" id="copymsg" role="status" style="display:block"></span></span></span></li>
   <li><span style="display:flex;gap:12px;align-items:flex-start;min-width:0"><span class="glyph num">3</span><span style="padding-top:7px">Then run the app again and create a new password.</span></span></li>

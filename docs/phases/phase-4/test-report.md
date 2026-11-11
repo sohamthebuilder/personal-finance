@@ -98,3 +98,79 @@ The owner ran it in their own browser, which is Brave (built on Chrome), on a ma
 - **Q4-11 (Minor):** the first Back showed the Locked screen without its password field. A second Back showed it with the field. Nothing private showed. For Security to note at sign-off.
 - The browser extension couldn't run this check: Brave labels pages it opens as `Sec-Fetch-Site: cross-site`, and the front gate correctly refuses them with 403. A typed address works.
 - The first try ended on the placeholder upload screen, which has no Log out (as approved for 4A), so the database was moved to the shell step for the second try.
+
+## QA, Part 4B (2026-11-11)
+
+Fresh QA agent on `phase-4b` (uncommitted work). The production build ran on a made-up HOME in a scratch folder with a made-up password. Data came from the repo's own made-up test helpers (`tests/support/import-helpers.ts`), built in memory and sent over HTTP or handed to the page's file field from memory. No spreadsheet file was written, and the spreadsheet hook and data guard were left alone. Large set for AC-27: 60 accounts (three with an HTML name, a 300-character unbroken name and a direction-changing character), 40 income and 40 expense categories with 3 subcategories each, 300 rows. Browser: the built-in browser pane at 1280, 375 and 320, light and dark.
+
+### Checks run
+
+`npm test` 475 passed, 0 failed. `npm run typecheck` passed. `npm audit` 0 vulnerabilities. `npm run guard` 248 files, nothing blocked. No failing lines.
+
+### Results per criterion
+
+| AC | Result | Evidence |
+|---|---|---|
+| AC-1 | Pass | By eye: screens 4, 5 (all 3 parts), 6, 8 (stage 1 and review), the reminder note, Settings Setup and Your data. No sideways scroll at 1280, 375 or 320 on any of them (page width measured). Light and dark both shown. Wording matches `design.md`. Keyboard: groups open and close with Enter and Space and report `aria-expanded`; pickers open with Enter, arrows move, Enter picks; Esc clears search; Options menu arrows and Esc back to Options; dialogs start on the safe button and trap focus; screen 8 focus starts on Cancel. See Q4B-1 and Q4B-2 |
+| AC-2 | Pass | Owner approval section records the yes for screens 2, 3, 14 (2026-11-08) and the redrawn 5, 8 and 13 (2026-11-10) |
+| AC-3 | Pass | With no session, every POST route (`upload`, `update/upload`, `update/rows`, `update/confirm`, `update/cancel`, `undo`, `summary/confirm`, `start-over`, `note/dismiss`, `setup`, `period`, `logout`, `delete`) gave 401; `/upload`, `/settings`, `/settings/delete` gave 303; `/api/status` 401. Cross-site `Origin` on `/api/setup` 403, no `Origin` on upload 403. CSP and `Referrer-Policy: no-referrer` on Settings. Over-size setup form 413 (in tests) |
+| AC-4 | Pass | HTML, long and direction-changing names show as text on screens 5, 8 and Settings. A group named `<script>x</script>` sent over HTTP comes back escaped; tab title stays "Personal Finance". No `innerHTML` or `dangerouslySetInnerHTML` in `src/`. No names in the server log. Layout issue with the long name: Q4B-1 |
+| AC-5 | Pass | Seen: the BAD_AMOUNT text with "Rows 3, 4 and 3 more." and the "Nothing was saved…" line; every group-name error; "Setup couldn't be saved. Nothing was changed."; "Your data changed in another window." with Reload. No `console.*` in `src/`; server log has 6 lines, no errors |
+| AC-6 | Pass | All four checks pass. No new packages |
+| AC-17 | Pass | Code read: worker with 768/64/4 MB limits, 60 s end, `env: {}`, bytes transferred. Tests for gate size limit, memory, timeout and no temp file ran and passed. Junk bytes give `NOT_EXCEL`; wrong content type 400. Limits not pushed by hand |
+| AC-18 | Pass | Row refusal by eye on screen 4. `ALREADY_IMPORTED` and the same-file note covered by tests that ran (not seen by eye) |
+| AC-19 | Pass | By eye with the large set: Part 1 of 3, 2 of 3, 3 of 3; Continue with 15 ungrouped shows "Choose a group." on each, opens Needs a group and focuses the first empty picker; income and expenses optional; Back to setup keeps saved answers; summary lines add up (₹82,230 = all income − all spending, and the six group totals add to it) |
+| AC-20 | Pass | By eye: New 5, Changed 0, Removed 300, net worth after and change, new account (Ungrouped), new income and expense categories (Not grouped), removed-names line, partial-file warning with "Most of your current accounts aren't in this file."; Replace stays off until ticked |
+| AC-21 | Pass | Replace, then Undo from the note dialog and from Settings; data and groups came back. Raw database in the made-up HOME holds no made-up name in plain text. Reminder note shows after the first import and after the update (Undo and Dismiss) |
+| AC-22 | Pass | After replace, Settings listed only the 5 accounts in the new file; Undo brought all 60 back with their groups. Test for condition 36 ran |
+| AC-23 | Pass | Settings: Ungrouped first and allowed; add group, move a category, Save, reload keeps it; save bar states; stale save from a second tab refused with the Reload note and controls off; "Leave without saving?" on sidebar links and Log out |
+| AC-24 | Pass | Covered by tests that ran (amounts limit on replace and first import; `today` from the server). Not probed by hand |
+| AC-27 | Pass | 60 accounts, 40 + 40 categories with subcategories: folds by keyboard, search narrows ("fund 4" gives 2 matches, "yacht" gives the no-match line with Clear search), no sideways scroll at 1280, 375, 320 |
+| AC-28 | Pass | By eye: add, rename, remove (dialog "Its 1 category goes back to Not grouped."), the four name errors, the 12-group limit line, same name allowed in income and expenses. Over HTTP the server refuses control characters, line breaks, tabs, 41 visible characters, a name that only differs by a no-break space, bad indexes and unknown account groups. Gaps in Q4B-5 |
+| AC-29 | Pass | Tests that ran cover income in several groups and the breakdown. Summary figure checks out by hand with all income counted as Earned |
+
+Totals: 19 Pass, 0 Fail, 0 Not verified.
+
+### Findings
+
+**Q4B-1 Minor. A very long unbroken name overlaps the picker or is cut off.**
+Steps: upload a made-up file with an account named "Made-up" followed by 300 "W"s, open screen 5 (or Settings Setup) and find its row. At 1280 the name runs under the group picker and past the card's right edge. At 375 and 320 it is cut off at the screen edge. The page itself doesn't scroll sideways. The name span is 4,316px wide; it doesn't wrap. Real names this long are unlikely.
+
+**Q4B-2 Minor. Closing the screen 5 "Remove group" dialog with Esc puts focus on the group row, not the Options button.**
+Steps: screen 5 part 2, add a group, put a category in it, focus its Options button, Enter, Down, Enter (Remove), then Esc. Focus lands on the group's row. The Undo dialog does return focus to the button that opened it.
+
+**Q4B-3 Minor. A search that matches only a group name says "0 matches" while showing groups.**
+Steps: screen 5 part 3, add groups G10, G11 and G12 with no categories, type "g1" in Find a category. The three groups show, and the count reads "0 matches".
+
+**Q4B-4 Minor. Undo from Settings shows no note on Settings.**
+Steps: after an update, Settings, Your data, Undo, Undo update. The page reloads on Settings Setup with no message. "Your data is back to how it was." appears only on Overview afterwards.
+
+**Q4B-5 Minor. The group-name checks let through names that look empty or look the same.**
+Steps (POST `/api/setup` with a live session and the current version): a name that is only a zero-width space is saved; "Café" written two ways (one letter vs letter plus accent) is saved as two groups; a name with a right-to-left override character is saved. The page uses the same check. Owner-typed only, so low risk.
+
+**Q4B-6 Minor. Accounts inside a group sort as text, not by number.**
+Steps: screen 5, Needs a group: "Made-up Deposit 16, 24, 32, 40, 48, 56, 8". `design.md` sets no order, so this is a note only.
+
+### Not verified by eye
+
+- Screen 4 loading stages and drag-over border, and screen 8's same-file note, "Show 50 more" and Changed rows with "was ₹…" (the made-up update had no changed rows). These are covered by tests that ran.
+- Screen 5 parts 2 and 3 in dark mode (switching theme needs a reload, which would have lost the unsaved answers). Part 1, screens 4, 6 and 8, the note and Settings were seen in dark mode.
+- Reduced motion and timing of the animations.
+
+### Re-test (Sonnet, 2026-11-11)
+
+Fresh QA agent, narrow re-test of Q4B-1 to Q4B-5. Production build rerun on a new made-up HOME with a made-up password and the same in-memory made-up data (60 accounts, 40 + 40 categories); no spreadsheet file written. Built-in browser pane for the screens; HTTP probes for Q4B-5.
+
+Checks: `npm test` 478 passed, 0 failed. `npm run typecheck` passed. `npm audit` 0 vulnerabilities. `npm run guard` 248 files, nothing blocked. No failing lines.
+
+| Item | Result | Evidence |
+|---|---|---|
+| Q4B-1 | Pass | A 300-character unbroken account name now wraps on screen 5 (part 1) and Settings Setup. 1280: ends before the picker, no overlap. 375 and 320: sits above the picker, inside the card. Page width equals the window at 1280, 375 and 320, light and dark (both on 320 and 1280 screen 5; Settings measured at 1280 light/dark, 375 light, 320 dark). Group names are capped at 40 characters, so a 300-character group name can't be saved; not tried |
+| Q4B-2 | Pass | By keyboard: Options, Enter, Down, Enter opens "Remove “Work”?" with focus on Keep group. Enter on Keep group and Esc both returned focus to that group's Options button |
+| Q4B-3 | Pass | Three empty groups G10, G11, G12 and a search for "g1" shows those three groups and reads "3 matches" (checked on part 2, income; part 3 uses the same screen) |
+| Q4B-4 | Pass | Update, then Settings, Your data, Undo, Undo update: Settings shows "Your data is back to how it was." Dismiss clears it, and it stays gone after reload |
+| Q4B-5 | Pass | Over HTTP: a zero-width-space-only name gives NAME_EMPTY 400. "Café" written both ways gives NAME_TAKEN 400. A right-to-left override character gives NAME_NOT_PLAIN 400. Control characters, line break and tab still 400. 40 and 41 emoji limits, bad indexes, unknown group and extra-key cases behave as before |
+
+Regression look: screens 5 and 13 at 375 look right (header, tabs, group cards, pickers stacked under names, bottom nav). No new findings.
+
+Totals: 5 Pass, 0 Fail. Q4B-6 stays a note. Not tried: a 300-character group name (the 40-character limit stops it).

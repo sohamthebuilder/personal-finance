@@ -63,24 +63,20 @@ The key design choice is **one shared set of definitions**. The dashboard and th
 
 | Term | Meaning |
 |---|---|
-| **Earned** | Income rows, excluding investment returns, loans and corrections |
+| **Earned** | All income rows, except balance corrections |
 | **Spent** | `Exp.` rows, as logged |
 | **Saved** | Earned minus Spent. Savings rate = Saved ÷ Earned |
-| **Investment returns** | Market gains and losses, interest and dividends |
-| **Recovered** | Corrections on your reimbursement account; shown on its own and does not affect Saved |
+| **Other corrections** | Balance corrections on any account; shown on their own and do not affect Saved |
 | **Invested** | Net transfers into investment accounts |
 | **Net worth** | Sum of all account balances as of today, with cards as negatives |
 
-**Net worth breakdown:** Earned − Spent + Investment returns + Recovered + Other corrections + Loans = change in net worth. This explains every rupee and shows how much of the change is real versus corrections.
+**Net worth breakdown:** Earned − Spent + Other corrections + Unmatched transfers = change in net worth. This explains every rupee and shows how much of the change is real versus corrections. A loan or investment gain logged as income counts in Earned (accepted gap, 2026-11-10).
 
 ### No personal data in the code
 
-Your account and category names are not written into the code. Only the format's fixed labels are, such as `Exp.` and `Transfer-In`. On first upload, a short **setup step** shows the names found in your file and asks you to:
-- group each account (Bank, Cards, Wallets, Investments, Money with others, Business)
-- pick which categories are investment returns and loans
-- pick your reimbursement account
+Your account and category names are not written into the code. Only the format's fixed labels are, such as `Exp.` and `Transfer-In`. On first upload, a short **setup step** shows the names found in your file and asks you to group your accounts (Bank, Cards, Wallets, Investments, Money with others, Business), and optionally your income and expense categories, in groups you name.
 
-The answers are stored in the encrypted database and can be changed in Settings. Generic keyword suggestions speed this up.
+The answers are stored in the encrypted database and can be changed in Settings. Generic keyword suggestions speed up the account groups.
 
 ## 4. What you'll see
 

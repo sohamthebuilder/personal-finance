@@ -12,7 +12,8 @@ import { dirname, join, resolve } from "node:path";
 import { after, before, describe, it } from "node:test";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
-import { advanceDatabase, MADE_UP_PASSWORD, type TempHome, tempHome } from "./support/app-helpers.ts";
+import { MADE_UP_PASSWORD, type TempHome, tempHome } from "./support/app-helpers.ts";
+import { row, workbook } from "./support/import-helpers.ts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PORT = 3117;
@@ -54,6 +55,41 @@ function post(path: string, fields: Record<string, string>, cookie?: string): Pr
       ...(cookie ? { Cookie: cookie } : {}),
     },
   });
+}
+
+const UPLOAD_HEADERS = { Origin: `http://${HOST}`, "Sec-Fetch-Site": "same-origin", "Content-Type": "application/octet-stream" };
+
+/** Sends a file as the raw body, as screens 4 and 8 do. */
+function upload(path: string, bytes: Uint8Array, cookie: string): Promise<Reply> {
+  return new Promise((resolvePromise, reject) => {
+    const req = http.request(
+      { host: "127.0.0.1", port: PORT, path, method: "POST", headers: { Host: HOST, ...UPLOAD_HEADERS, Cookie: cookie, "Content-Length": String(bytes.byteLength) } },
+      (res) => {
+        let body = "";
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => (body += chunk));
+        res.on("end", () => resolvePromise({ status: res.statusCode ?? 0, headers: res.headers, body }));
+      },
+    );
+    req.on("error", reject);
+    req.end(Buffer.from(bytes));
+  });
+}
+
+/** Four new accounts in the newer file, all left Ungrouped. */
+const NEW_GROUPS = JSON.stringify(["", "", "", ""]);
+const HOSTILE_HTML = "Made-up <img src=x onerror=alert(1)> Bank";
+const HOSTILE_LONG = `Made-up${"W".repeat(4000)}`;
+const HOSTILE_BIDI = "Made-up \u202Eknab\u202C Wallet";
+const HOSTILE_GROUP = "<b>Made-up</b> Work";
+
+/** Names from the file show as escaped text, and never reach the tab title (AC-4). */
+function assertNamesAreText(body: string): void {
+  assertHasNot(body, /<img src=x/);
+  assertHas(body, /Made-up &lt;img src=x onerror=alert\(1\)&gt; Bank/);
+  assert.ok(body.includes(HOSTILE_LONG), "the long name shows whole");
+  assert.ok(body.includes(HOSTILE_BIDI), "the name with direction marks shows as text");
+  assertHas(body, /<title>Personal Finance<\/title>/);
 }
 
 function cookieFrom(reply: Reply): string {
@@ -322,7 +358,7 @@ describe("production server", { timeout: 240_000 }, () => {
     assert.equal((await request("/fonts/google-sans-flex.woff2?v=1")).status, 303);
   });
 
-  it("runs the whole 4A flow on a made-up HOME, holding the shell back until the summary is confirmed", async () => {
+  it("runs the whole 4A and 4B flow on a made-up HOME, holding the shell back until the summary is confirmed", async () => {
     // Screen 1, and the server repeats the page's checks.
     const first = (await request("/")).body;
     assertHas(first, /Create your password/);
@@ -340,11 +376,12 @@ describe("production server", { timeout: 240_000 }, () => {
     assert.equal(statSync(home.files.folder).mode & 0o777, 0o700);
     assert.ok(existsSync(home.files.run), "the run file is written for the wipe script");
 
-    // 4A stops at the placeholder upload screen. No address gets past it.
+    // Screen 4. No address gets past it.
     for (const path of ["/", "/?screen=shell", "/?step=summary"]) {
       const page = await request(path, { headers: { Cookie: cookie } });
       assert.equal(page.status, 200, path);
       assertHas(page.body, /Add your export/);
+      assertHas(page.body, /Drop your export here/);
       assertHasNot(page.body, /Your Overview arrives/);
     }
     for (const path of ["/settings", "/settings/delete", "/upload"]) {
@@ -352,12 +389,111 @@ describe("production server", { timeout: 240_000 }, () => {
       assert.ok([303, 307].includes(page.status), path);
     }
     assert.equal((await post("/api/delete", { password: MADE_UP_PASSWORD, understood: "yes" }, cookie)).status, 409);
+    assert.equal((await post("/api/summary/confirm", { version: "1" }, cookie)).status, 409);
 
-    // Rows and saved answers, as Part 4B will save them: still no shell before the summary is confirmed.
-    await advanceDatabase(home.files, MADE_UP_PASSWORD, "summary");
-    assertHas((await request("/", { headers: { Cookie: cookie } })).body, /Confirm/);
+    // A refused file: fixed wording code, row numbers only, nothing saved.
+    const refused = await upload("/api/upload", workbook([row(), row({ inr: "not an amount" })]), cookie);
+    assert.deepEqual(JSON.parse(refused.body), { ok: false, code: "BAD_AMOUNT", rows: [3], rowCount: 1 });
+    // Over the size limit: refused before the body is read.
+    const tooBig = await request("/api/upload", { method: "POST", headers: { ...UPLOAD_HEADERS, Cookie: cookie, "Content-Length": String(20 * 1024 * 1024 + 1) } });
+    assert.equal(tooBig.status, 413);
+
+    // The first upload.
+    const firstFile = workbook([
+      row({ account: "Made-up Bank", secondAccount: "" }),
+      row({ account: "Made-up Card", secondAccount: "" }),
+      row({ account: "Made-up Wallet", secondAccount: "" }),
+      row({ account: "Made-up Fund", secondAccount: "" }),
+      row({ account: "Made-up Bank", type: "Income", category: "Made-up Salary", secondAccount: "" }),
+    ]);
+    const uploaded = await upload("/api/upload", firstFile, cookie);
+    assert.deepEqual(JSON.parse(uploaded.body), { ok: true });
+    assert.equal(JSON.parse((await upload("/api/upload", firstFile, cookie)).body).code, "ALREADY_IMPORTED");
+    const version = (body: string) => /\\?"version\\?":(\d+)/.exec(body)?.[1] ?? "x";
+
+    // Screen 5: three parts, suggestions for accounts, and the server repeats every check (AC-19, AC-28).
+    const setupPage = (await request("/", { headers: { Cookie: cookie } })).body;
+    assertHas(setupPage, /Part (<!-- -->)?1(<!-- -->)? of (<!-- -->)?3/);
+    assertHas(setupPage, /Group your accounts/);
+    assertHas(setupPage, /Find an account/);
+    assertHas(setupPage, /Suggested/);
+    assertHasNot(setupPage, /\sstyle="/);
     assert.ok([303, 307].includes((await request("/settings", { headers: { Cookie: cookie } })).status));
-    await advanceDatabase(home.files, MADE_UP_PASSWORD, "shell");
+    // Accounts in the server's order: Bank, Card, Fund, Wallet. One income and one expense category.
+    const setupAnswers = (accounts: string[], income: { names: string[]; categories: Array<number | null> }, expense = { names: [] as string[], categories: [null] as Array<number | null> }) =>
+      JSON.stringify({ accounts, income, expense });
+    const groupsOk = ["Bank", "Cards", "Investments", "Wallets"];
+    const saveSetup = (answers: string, at = version(setupPage)) => post("/api/setup", { version: at, answers }, cookie);
+    const refusedWith = async (answers: string) => JSON.parse((await saveSetup(answers)).body).error as string;
+    assert.equal(await refusedWith(setupAnswers(["Bank", "", "Investments", "Wallets"], { names: [], categories: [null] })), "NEEDS_GROUP");
+    assert.equal(await refusedWith(setupAnswers(groupsOk, { names: ["W".repeat(41)], categories: [0] })), "NAME_TOO_LONG");
+    assert.equal(await refusedWith(setupAnswers(groupsOk, { names: ["Work", " work "], categories: [0] })), "NAME_TAKEN");
+    assert.equal(await refusedWith(setupAnswers(groupsOk, { names: ["not grouped"], categories: [0] })), "NAME_RESERVED");
+    assert.equal(await refusedWith(setupAnswers(groupsOk, { names: Array.from({ length: 13 }, (_, at) => `Group ${at}`), categories: [0] })), "TOO_MANY_GROUPS");
+    assert.equal(await refusedWith(setupAnswers(groupsOk, { names: ["  "], categories: [0] })), "NAME_EMPTY");
+    assert.equal(await refusedWith("not json"), "BAD_ANSWERS");
+    assert.equal((await saveSetup(setupAnswers(groupsOk, { names: [], categories: [null] }), "0x")).status, 409);
+    assert.equal((await post("/api/setup", { version: version(setupPage), answers: "x".repeat(17 * 1024) }, cookie)).status, 413);
+    assert.equal((await post("/api/setup", { version: version(setupPage), answers: setupAnswers(groupsOk, { names: [], categories: [null] }) })).status, 401);
+    // The same name in the income and the expense list is fine; names with HTML are plain text.
+    const saved = await saveSetup(setupAnswers(groupsOk, { names: [HOSTILE_GROUP], categories: [0] }, { names: [HOSTILE_GROUP], categories: [null] }));
+    assert.equal(JSON.parse(saved.body).ok, true);
+    assert.equal((await saveSetup(setupAnswers(groupsOk, { names: [], categories: [null] }))).status, 409);
+
+    // Screen 6, and still no shell until it's confirmed.
+    const summaryPage = (await request("/", { headers: { Cookie: cookie } })).body;
+    assertHas(summaryPage, /Does this look right\?/);
+    assertHas(summaryPage, /Net worth today/);
+    assertHas(summaryPage, /5 rows(<!-- -->)? from (<!-- -->)?15 Jan 2024(<!-- -->)? to (<!-- -->)?15 Jan 2024/);
+    assert.ok([303, 307].includes((await request("/settings", { headers: { Cookie: cookie } })).status));
+    assert.deepEqual(JSON.parse((await post("/api/summary/confirm", { version: version(summaryPage) }, cookie)).body), { ok: true });
+    assert.deepEqual(JSON.parse((await post("/api/start-over", { version: version(summaryPage) }, cookie)).body), { ok: false, error: "CONFIRMED" });
+    assertHas((await request("/", { headers: { Cookie: cookie } })).body, /Your data is in\. Now delete the export file/);
+
+    // Screen 8: the same file matches; a file missing most accounts needs the tick, on the server too.
+    assert.deepEqual(JSON.parse((await upload("/api/update/upload", firstFile, cookie)).body), { ok: true, same: true });
+    // The newer file holds names with HTML, a very long unbroken string and direction-changing characters.
+    const partial = workbook([
+      row({ account: "Made-up Bank", secondAccount: "", period: "16/01/2024, 10:30:00" }),
+      row({ account: "Made-up New Account", secondAccount: "" }),
+      row({ account: HOSTILE_HTML, secondAccount: "" }),
+      row({ account: HOSTILE_LONG, secondAccount: "" }),
+      row({ account: HOSTILE_BIDI, secondAccount: "" }),
+    ]);
+    assert.deepEqual(JSON.parse((await upload("/api/update/upload", partial, cookie)).body), { ok: true, same: false });
+    const reviewPage = (await request("/upload", { headers: { Cookie: cookie } })).body;
+    assertHas(reviewPage, /Check the changes/);
+    assertHas(reviewPage, /Most of your current accounts aren(&#x27;|')t in this file\./);
+    assertHas(reviewPage, /New accounts/);
+    assertNamesAreText(reviewPage);
+    const replace = (fields: Record<string, string>) => post("/api/update/confirm", { version: version(reviewPage), groups: NEW_GROUPS, ...fields }, cookie);
+    assert.deepEqual(JSON.parse((await replace({ ticked: "no" })).body), { ok: false, error: "NEED_TICK" });
+    assert.deepEqual(JSON.parse((await replace({ ticked: "yes", version: "0" })).body), { ok: false, error: "STALE" });
+    // A stale review is thrown away, so the file goes up again.
+    await upload("/api/update/upload", partial, cookie);
+    const again2 = (await request("/upload", { headers: { Cookie: cookie } })).body;
+    assert.deepEqual(JSON.parse((await post("/api/update/confirm", { version: version(again2), groups: NEW_GROUPS, ticked: "yes" }, cookie)).body), { ok: true });
+    const updated = (await request("/", { headers: { Cookie: cookie } })).body;
+    assertHas(updated, /Your data is updated\./);
+    const settingsPage = (await request("/settings", { headers: { Cookie: cookie } })).body;
+    assertHas(settingsPage, /Goes back to your data from before/);
+    // Screen 13: Setup, Your data and AI, with the saved group name as escaped text.
+    assertHas(settingsPage, /Save changes/);
+    assertHas(settingsPage, /No unsaved changes\./);
+    assertHas(settingsPage, /&lt;b&gt;Made-up&lt;\/b&gt; Work/);
+    assertHasNot(settingsPage, /<b>Made-up/);
+    assertHasNot(settingsPage, /\sstyle="/);
+
+    // Undo brings the old data back; Settings then has nothing to undo.
+    assert.deepEqual(JSON.parse((await post("/api/undo", { version: version(updated) }, cookie)).body), { ok: true });
+    assertHas((await request("/", { headers: { Cookie: cookie } })).body, /Your data is back to how it was\./);
+    const afterUndo = (await request("/settings", { headers: { Cookie: cookie } })).body;
+    assertHas(afterUndo, /Nothing to undo yet\./);
+    // QA Q4B-4: Undo from Settings reloads Settings, so the note shows there too.
+    assertHas(afterUndo, /Your data is back to how it was\./);
+    assert.deepEqual(JSON.parse((await post("/api/note/dismiss", {}, cookie)).body), { ok: true });
+    assertHasNot((await request("/", { headers: { Cookie: cookie } })).body, /Your data is back to how it was/);
+    assertHasNot((await request("/settings", { headers: { Cookie: cookie } })).body, /Your data is back to how it was/);
 
     // Screen 7 with the placeholder Overview.
     const shell = await request("/", { headers: { Cookie: cookie } });
@@ -407,7 +543,7 @@ describe("production server", { timeout: 240_000 }, () => {
     assertHas(reloaded, /<button class="btn btn--primary" type="submit" disabled="">/);
 
     // Nothing the owner typed, and no token, reached the app's output (condition 53).
-    for (const secret of [MADE_UP_PASSWORD, "a wrong made-up phrase", "correcthorsebatterystaple", cookie.split("=")[1] ?? "x"]) {
+    for (const secret of [MADE_UP_PASSWORD, "a wrong made-up phrase", "correcthorsebatterystaple", cookie.split("=")[1] ?? "x", "onerror", "WWWWWWWWWW", "Made-up New Account"]) {
       assert.ok(!output.includes(secret), "a password or token was printed");
     }
   });

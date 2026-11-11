@@ -63,6 +63,8 @@ export function Shell(props: {
   period: string;
   firstYear: number;
   today: string;
+  /** The header's title, when a screen's stage changes it (screen 8). Fixed text only. */
+  title?: string;
   children: ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -115,7 +117,7 @@ export function Shell(props: {
     );
   }
 
-  const title = TITLES[props.screen];
+  const title = props.title ?? TITLES[props.screen];
   return (
     <div className={`shell ${collapsed ? "is-collapsed" : ""}`}>
       <nav className="side" aria-label="Screens">
@@ -160,7 +162,7 @@ export function Shell(props: {
             <Icon name="gear" />
             Settings
           </a>
-          <button className="btn btn--sm btn--quiet only-wide" type="button" onClick={logOut}>
+          <button className="btn btn--sm btn--quiet only-wide" type="button" data-leave onClick={logOut}>
             <Icon name="out" />
             Log out
           </button>
@@ -176,7 +178,7 @@ export function Shell(props: {
                 <a className="pop__opt" role="menuitem" href="/settings">
                   <span>Settings</span>
                 </a>
-                <button className="pop__opt" role="menuitem" type="button" onClick={logOut}>
+                <button className="pop__opt" role="menuitem" type="button" data-leave onClick={logOut}>
                   <span>Log out</span>
                 </button>
               </div>

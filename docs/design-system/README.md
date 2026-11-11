@@ -106,6 +106,10 @@ All are in `system.css`, and shown in `gallery.html`.
 | Command to copy | `.cmd` | One fixed line in the code font, with a small Copy button that reads "Copied" for 2 seconds. The text stays selectable if copying fails |
 | Confirmation | `.scrim`, `.dialog` | Say exactly what happens. Never the browser's own dialog |
 | Icon in a tile | `.glyph` | Neutral, for account groups and files |
+| Long list in groups | `.folds`, `.fold`, `.fold__btn`, `.fold__body`, `.fold__empty` | Each group is one button with a name, a short count and a chevron, closed unless it needs the owner first. Enter or Space opens it. One level only, never a group inside a group. A row whose answer changes stays where it is, with a `Moved to …` tag, and settles into its new group when a group opens or closes, the search changes or the page loads |
+| Find in a list | `.search`, `.search__count`, `.search__none` | Icon first, a hidden label, a Clear button once there's text. Typing narrows the list at once and opens every group with a match. Esc clears. The count is a polite live region |
+| Name something in place | `.inline-edit`, `.add-row` | Label above, the field with its buttons beside it, then the hint or error. Enter saves, Esc cancels. The error sits under the field and clears once it's fixed |
+| Save on a long page | `.savebar` | The page's one primary button. It sticks to the bottom of the window only while there's something to say (unsaved, saved, couldn't save), otherwise it sits at the end of the page |
 
 ## Charts
 
@@ -128,6 +132,9 @@ From `icons.svg`, on a 24 grid with a 1.75 line, rounded ends and no fill. To ad
 | Sidebar collapses or expands | Owner clicked | 240ms, charts redraw at the end | Instant |
 | Number changes | Data or period changed | 500ms roll from old value to new | New value |
 | Bar changes | Data or period changed | 400ms from old length to new | New length |
+| Group opens | Click, Enter or Space | 200ms: body fades in and drops 6px, chevron turns | Instant |
+| Group closes | Click, Enter or Space | Body goes at once, chevron turns 200ms | Instant |
+| Search narrows | Typing | Rows hide and show at once, no movement | Same |
 
 One easing for everything: `cubic-bezier(.2, .8, .2, 1)`. No bounce. Nothing loops, and skeletons don't shimmer. Numbers roll up from zero only once, the first time the dashboard appears. Sliding content is clipped, so a step change can't flash a scrollbar.
 
@@ -180,3 +187,5 @@ The preview control sits in a corner, not on the screen, and is the only thing a
 | 2026-11-08 | 4 | New `.cmd` part and `--font-code` (the Mac's own code font, nothing downloaded) for the forgotten-password command. New `copy` and `trash` icons | Yes, 2026-11-08: "Yes, approve all" |
 | 2026-11-08 | 4 | Build helpers at the end of `system.css`: `.sprite`, a few spacing classes, `.steps`, `.with-glyph`, `.meter` step widths, `.menu`, `.date-row`, and no underline on links styled as `.btn` or `.pop__opt`. They hold the approved previews' inline spacings, because the app can't use `style="..."` (D-010). No change to how anything looks | Small fix, noted in the handoff |
 | 2026-11-08 | 4 | Small fix: the header picker width rules now read `.top > .picker`, so they reach only the header's own period picker and not the date pickers in the "Choose a period" dialog, which sits inside the header (QA Q4-1). No change to how anything looks | Small fix, noted in the handoff |
+| 2026-11-10 | 4 | Long setup lists for the setup change (accounts, and income and expense groups, which work the same): `.folds`/`.fold` (groups that open and close), `.search`, `.inline-edit` and `.add-row`, `.savebar`, three icons (`search`, `x`, `plus`), and a base rule `[hidden] { display: none !important; }` so `hidden` always hides (before, a `.btn` with `hidden` still showed) | Approved by the owner on 2026-11-10 ("Yes, approve all") |
+| 2026-11-11 | 4 | Small fix: `.pick-row__name`, `.pick-row__sub` and `.fold__name` get `overflow-wrap: anywhere`, so a very long unbroken name wraps inside its row instead of running under the picker or off the screen (QA Q4B-1). No change for normal names | Small fix, noted in the handoff |

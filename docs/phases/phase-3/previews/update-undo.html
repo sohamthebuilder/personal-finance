@@ -333,8 +333,8 @@ svg.i { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor;
 .pick-rows { border-top: 1px solid var(--line); }
 .pick-row { display: grid; grid-template-columns: auto minmax(0, 1fr) 208px; gap: var(--s-3); align-items: center; padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
 .pick-row--plain { grid-template-columns: minmax(0, 1fr) 280px; }
-.pick-row__name { font-weight: 500; display: flex; flex-wrap: wrap; gap: 2px var(--s-2); align-items: center; }
-.pick-row__sub { font-size: var(--t-label); color: var(--ink-2); }
+.pick-row__name { font-weight: 500; display: flex; flex-wrap: wrap; gap: 2px var(--s-2); align-items: center; overflow-wrap: anywhere; }
+.pick-row__sub { font-size: var(--t-label); color: var(--ink-2); overflow-wrap: anywhere; }
 .pick-row .field__error { grid-column: 1 / -1; margin-top: 0; justify-self: end; }
 .only-narrow { display: none !important; }
 @media (max-width: 860px) {
@@ -385,6 +385,57 @@ a.btn, a.pop__opt { text-decoration: none; }
 a.pop__opt { color: var(--ink); }
 /* Day, month and year pickers under one label, in the Custom period dialog. */
 .date-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1.2fr); gap: var(--s-2); }
+
+/* ---------- Long setup lists (Phase 4, setup change) ----------
+   Groups that open and close, a search field, naming in place,
+   and a save bar that stays in reach on a long page. */
+.folds { border-top: 1px solid var(--line); }
+.fold { border-bottom: 1px solid var(--line); }
+.fold__head { display: flex; align-items: center; gap: var(--s-2); }
+.fold__btn { flex: 1; min-width: 0; min-height: 60px; display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-2) var(--s-3) 0; background: none; border: 0; border-radius: var(--r-control); text-align: left; cursor: pointer; }
+.fold__btn[disabled] { cursor: default; }
+.fold__text { flex: 1; min-width: 0; }
+.fold__name { display: block; font-weight: 500; overflow-wrap: anywhere; }
+.fold__sum { display: block; font-size: var(--t-label); color: var(--ink-2); }
+.fold__chev { color: var(--ink-2); transition: transform var(--m-out) var(--ease), color var(--m-in) var(--ease); }
+.fold__btn:hover .fold__chev { color: var(--ink); }
+.fold__btn[aria-expanded="true"] .fold__chev { transform: rotate(180deg); }
+.fold__body { padding: 0 0 var(--s-2) var(--s-5); animation: drop var(--m-out) var(--ease); }
+.fold--glyph .fold__body { padding-left: var(--s-7); }
+.fold__body .pick-rows { border-top: 1px solid var(--line); }
+.fold__body .pick-row:last-child { border-bottom: 0; }
+.fold__empty { padding: var(--s-3) 0; border-top: 1px solid var(--line); font-size: var(--t-label); color: var(--ink-2); }
+.search { position: relative; margin-bottom: var(--s-3); }
+.search > .i { position: absolute; left: var(--s-4); top: 15px; color: var(--ink-2); pointer-events: none; }
+.search .input { padding-left: calc(var(--s-4) + 18px + var(--s-2)); padding-right: var(--s-7); }
+.search .input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+[hidden] { display: none !important; }
+.search__count:empty { display: none; }
+.search__count { margin-bottom: var(--s-3); font-size: var(--t-label); color: var(--ink-2); }
+.search__none { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-1) var(--s-2); padding: var(--s-5) 0; border-top: 1px solid var(--line); color: var(--ink-2); text-align: center; }
+.inline-edit { padding: var(--s-3) 0; }
+.inline-edit__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.inline-edit__row .input { flex: 1 1 200px; width: auto; min-width: 0; }
+.add-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); padding-top: var(--s-3); }
+.add-row .field__hint { margin: 0; }
+.savebar { position: static; bottom: var(--s-4); z-index: 15; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); margin-top: var(--s-5); padding: var(--s-3) var(--s-3) var(--s-3) var(--s-5); background: var(--surface); border-radius: var(--r-card); box-shadow: var(--shadow-pop); }
+.savebar.is-dirty, .savebar.is-ok, .savebar.is-bad { position: sticky; }
+.savebar__text { flex: 1 1 auto; min-width: 0; display: flex; gap: var(--s-2); align-items: center; color: var(--ink-2); }
+.savebar.is-dirty .savebar__text, .savebar.is-ok .savebar__text, .savebar.is-bad .savebar__text { color: var(--ink); font-weight: 500; }
+.savebar.is-ok .savebar__text > .i { color: var(--gain); }
+.savebar.is-bad .savebar__text > .i { color: var(--danger); }
+.savebar__text:focus { outline: none; }
+@media (max-width: 860px) {
+  .savebar { bottom: calc(var(--s-8) + var(--s-3)); }
+}
+@media (max-width: 560px) {
+  .fold__body, .fold--glyph .fold__body { padding-left: var(--s-4); }
+}
+@media (max-width: 480px) {
+  .savebar { padding-left: var(--s-4); }
+  .savebar__text { flex-basis: 100%; }
+  .savebar .btn { flex: 1 1 0; }
+}
 </style>
 <style>
 /* Preview control only. Not part of the app. */
@@ -424,6 +475,9 @@ a.pop__opt { color: var(--ink); }
 <symbol id="i-fold" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15M16 9.5L13.5 12l2.5 2.5"/></symbol>
 <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.500 8.500V6.500a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/></symbol>
 <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.500 7h15M10 7V5h4v2M6.500 7l1 12a2 2 0 0 0 2 1.800h5a2 2 0 0 0 2-1.800l1-12M10.500 11v6M13.500 11v6"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
 </defs></svg>
 <div id="app"></div>
 <div class="pv" id="pv"></div>
@@ -554,6 +608,7 @@ const toggleTheme=()=>{const r=document.documentElement,dark=r.dataset.theme?r.d
 
 const TODAY=new Date(2026,10,28);
 const S={view:'home',period:'This month',data:'old',custom:null,note:'',navOff:false,mock:'',list:0,shown:10,ok:false,grp:'Ungrouped',cat:0};
+const NEWINC=[['Workshops','Online · In person'],['Prize money','']],NEWEXP=[['Pet care','Food · Vet · Grooming'],['Parking','']];
 const OLD={nw:1842350,delta:102440,earned:185000,spent:41280,saved:143720,rate:78,invested:40000,over:{e:185,s:41},cats:[['Rent',18000],['Groceries',8640],['Eating out',5420],['Travel',4900],['Bills',2780]]};
 const NEW={nw:1890600,delta:150690,earned:185000,spent:96530,saved:88470,rate:48,invested:40000,over:{e:185,s:97},cats:[['Rent',18000],['Groceries',26180],['Travel',19450],['Eating out',17300],['Bills',15600]].sort((a,b)=>b[1]-a[1])};
 function cur(){const d=S.data==='new'?NEW:OLD;if(S.period==='This month')return{...PERIODS['This month'],...d,range:'1 to 28 Nov 2026',notes:['Groceries are ₹3,100 above where they usually are by the 28th.',"You've saved more than 40% of what you earned for 5 months in a row.","Rainy Day Bank's balance was last updated in August."]};
@@ -581,7 +636,8 @@ review:()=>{const part=S.mock==='partial';return shell('Check the changes','Chec
  <section class="card span-12" aria-label="Rows"><div class="seg" role="radiogroup" aria-label="Which rows" data-i="${S.list}" style="max-width:420px"><span class="seg__thumb"></span>${LISTS.map(([l,r],i)=>`<label><input type="radio" name="rl" value="${i}" ${S.list===i?'checked':''}><span>${l} ${r.length}</span></label>`).join('')}</div>
  <ul class="list" id="rl" style="margin-top:8px"></ul><div id="mr"></div></section>
  <section class="card span-12"><h2>New accounts</h2><p class="muted" style="margin:4px 0 12px">These go in Ungrouped until you choose a group.</p><div class="pick-rows"><div class="pick-row"><span class="glyph" id="ng">${ic(GI[S.grp==='Ungrouped'?'':S.grp])}</span><div><div class="pick-row__name"><span>Travel Card</span></div><div class="pick-row__sub">−₹3,200</div></div>${picker('na',S.grp,['Ungrouped',...GROUPS],v=>{S.grp=v;$('#ng').innerHTML=ic(GI[v==='Ungrouped'?'':v])},{label:'Group for Travel Card',up:true})}</div></div></section>
- <section class="card span-12"><h2>New income categories</h2><p class="muted" style="margin:4px 0 12px">These count as Earned unless you change them.</p><div class="pick-rows"><div class="pick-row pick-row--plain"><span class="pick-row__name">Side Project</span><div class="seg" role="radiogroup" aria-label="Side Project" data-i="${S.cat}"><span class="seg__thumb"></span>${['Earned','Returns','Loan'].map((k,j)=>`<label><input type="radio" name="nc" value="${j}" ${S.cat===j?'checked':''}><span>${k}</span></label>`).join('')}</div></div></div></section>
+ <section class="card span-12"><h2>New income categories</h2><p class="muted" style="margin:4px 0 12px">These show as Not grouped. You can put them in a group in Settings.</p><div class="pick-rows">${NEWINC.map(([n,sub])=>`<div class="pick-row pick-row--plain"><div><div class="pick-row__name"><span>${n}</span><span class="tag">Not grouped</span></div>${sub?`<div class="pick-row__sub">${sub}</div>`:''}</div></div>`).join('')}</div></section>
+ <section class="card span-12"><h2>New expense categories</h2><p class="muted" style="margin:4px 0 12px">These show as Not grouped. You can put them in a group in Settings.</p><div class="pick-rows">${NEWEXP.map(([n,sub])=>`<div class="pick-row pick-row--plain"><div><div class="pick-row__name"><span>${n}</span><span class="tag">Not grouped</span></div>${sub?`<div class="pick-row__sub">${sub}</div>`:''}</div></div>`).join('')}</div></section>
  </div><div class="task__actions"><button class="btn btn--primary" id="go" type="button" ${part?'disabled':''}>Replace my data</button><button class="btn" id="cancel" type="button">Cancel</button></div><p class="label muted" style="margin-top:12px">Your current data is kept, encrypted, so you can undo this until your next update.</p>`)}};
 function drawRows(){const[l,r]=LISTS[S.list];$('#rl').innerHTML=r.slice(0,S.shown).map(rowHTML).join('');const left=r.length-S.shown;$('#mr').innerHTML=left>0?`<button class="btn btn--sm" id="more50" type="button" style="margin-top:12px">Show ${Math.min(50,left)} more</button>`:'';$('#more50')&&($('#more50').onclick=()=>{S.shown+=50;drawRows()})}
 function render(){closePop();S.navOff=S.view!=='home';app.innerHTML=V[S.view]();$('.page').classList.add('enter');wireShell();$$('.js-up').forEach(b=>b.onclick=()=>go('choose',{mock:''}));A[S.view]?.();}
@@ -597,7 +653,7 @@ choose(){const d=$('#drop');['dragenter','dragover'].forEach(t=>d.addEventListen
  $('#cancel').onclick=()=>go('home');$('#done')&&($('#done').onclick=()=>go('home'));
  $('#pick').onclick=()=>{const m=S.mock;$('#ref')?.remove();d.innerHTML=`<span class="glyph">${ic('file')}</span><strong id="stage">Checking the file</strong><div class="meter" style="width:100%;max-width:280px;margin-top:12px"><div id="um"></div></div>`;const st=['Checking the file','Reading rows','Adding up balances','Comparing with your current data'];let i=0;requestAnimationFrame(()=>$('#um').style.width='25%');
   const t=setInterval(()=>{i++;if(!$('#stage')){clearInterval(t);return}if(i<4){$('#stage').textContent=st[i];$('#um').style.width=(i+1)*25+'%'}else{clearInterval(t);go('review',{list:0,shown:10,mock:m==='partial'?'partial':''})}},reduce?200:520)}},
-review(){drawRows();$$('[name=rl]').forEach(r=>r.onchange=()=>{S.list=+r.value;S.shown=10;r.closest('.seg').dataset.i=r.value;drawRows()});$$('[name=nc]').forEach(r=>r.onchange=()=>{S.cat=+r.value;r.closest('.seg').dataset.i=r.value});
+review(){drawRows();$$('[name=rl]').forEach(r=>r.onchange=()=>{S.list=+r.value;S.shown=10;r.closest('.seg').dataset.i=r.value;drawRows()});
  $('#cancel').onclick=()=>go('home');const s=$('#sure');if(s){s.onchange=()=>$('#go').disabled=!s.checked;$('#cancel').focus()}
  $('#go').onclick=()=>{const b=$('#go');b.disabled=true;b.textContent='Replacing…';$('#cancel').disabled=true;setTimeout(()=>{const from=S.data;go('home',{data:'new',pending:from,note:noteUpdated})},reduce?200:700)}}};
 pvMenu([['Start again',()=>go('home',{data:'old',note:'',mock:''})],['Review a normal file',()=>go('review',{mock:'',list:0,shown:10})],['Review a partial file',()=>go('review',{mock:'partial',list:0,shown:10})],['Show a refused file',()=>go('choose',{mock:'bad'})],['Show the same file again',()=>go('choose',{mock:'same'})]]);
