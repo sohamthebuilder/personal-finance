@@ -8,6 +8,7 @@
  */
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import type Database from "better-sqlite3-multiple-ciphers";
+import type { PendingUpdate } from "../data/update.ts";
 
 export const COOKIE_NAME = "pf_session";
 export const IDLE_MS = 15 * 60 * 1000;
@@ -32,6 +33,8 @@ export interface Unlocked {
   tokenHash: Buffer;
   lastUse: number;
   period: Period;
+  /** The one file waiting on screen 8. Parsed rows only, in memory only. Gone on cancel, lock, log out, a new upload and confirm. */
+  pending: PendingUpdate | null;
 }
 
 export interface SessionStore {
@@ -46,6 +49,8 @@ export interface SessionStore {
   changes: Promise<unknown>;
   /** Set when a delete finishes, so screen 1 can say so. */
   justDeleted: boolean;
+  /** Set when a lock threw away a file waiting on screen 8, so the upload screen can say so once. */
+  lostUpload: boolean;
   /** The last screen the owner was on, from the fixed list, for after log in. */
   returnTo: ReturnScreen;
   sweeper: ReturnType<typeof setInterval> | null;
@@ -64,6 +69,7 @@ function freshStore(): SessionStore {
     checking: false,
     changes: Promise.resolve(),
     justDeleted: false,
+    lostUpload: false,
     returnTo: "/",
     sweeper: null,
     // The wall clock, so time asleep counts as idle (S4-4).
@@ -101,6 +107,7 @@ export async function startSession(db: Database.Database): Promise<string> {
     tokenHash: hashToken(token),
     lastUse: store.now(),
     period: { kind: "this-month" },
+    pending: null,
   };
   store.lastLock = null;
   store.failures = 0;
@@ -116,6 +123,9 @@ export async function lock(reason: LockReason | null): Promise<void> {
   store.unlocked = null;
   if (reason !== null) store.lastLock = reason;
   if (!unlocked) return;
+  // A file waiting for a yes is thrown away with the session (design, screen 8).
+  if (unlocked.pending !== null) store.lostUpload = true;
+  unlocked.pending = null;
   try {
     await store.changes;
   } catch {
@@ -166,6 +176,11 @@ export function startSweeper(): void {
   store.sweeper.unref();
 }
 
+/** Runs one change for a session, or gives null if that session has ended by the time its turn comes. */
+export function changeFor<T>(session: Unlocked, change: (db: Database.Database) => T): Promise<T | null> {
+  return runChange(() => (sessionStore().unlocked === session ? change(session.db) : null));
+}
+
 /** Runs changes one at a time. Lock waits for the one running. */
 export function runChange<T>(change: () => T | Promise<T>): Promise<T> {
   const store = sessionStore();
@@ -187,19 +202,22 @@ function secondsLeft(store: SessionStore): number {
   return Math.max(1, Math.ceil((store.waitUntil - store.now()) / 1000));
 }
 
+/** How long a try is told to wait when another check is still running. */
+export const BUSY_WAIT_SECONDS = 2;
+
 /**
  * Starts a password check (Decision 6). Refused at once, with no hashing,
  * during a wait or while another check runs. The count goes up before the
  * hashing starts, so a crash halfway still counts. Only success resets it.
+ * The wait itself starts only when the try turns out wrong (S4-14), so a
+ * correct try never shows a wait while it's being checked.
  */
 export function beginPasswordCheck(): CheckStart {
   const store = sessionStore();
-  if (store.checking) return { ok: false, waitSeconds: store.waitUntil > store.now() ? secondsLeft(store) : 2 };
+  if (store.checking) return { ok: false, waitSeconds: BUSY_WAIT_SECONDS };
   if (store.waitUntil > store.now()) return { ok: false, waitSeconds: secondsLeft(store) };
   store.checking = true;
   store.failures += 1;
-  const wait = waitFor(store.failures);
-  store.waitUntil = wait === 0 ? 0 : store.now() + wait;
   let finished = false;
   return {
     ok: true,
@@ -210,7 +228,10 @@ export function beginPasswordCheck(): CheckStart {
       if (success) {
         store.failures = 0;
         store.waitUntil = 0;
+        return;
       }
+      const wait = waitFor(store.failures);
+      store.waitUntil = wait === 0 ? 0 : store.now() + wait;
     },
   };
 }

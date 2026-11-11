@@ -12,6 +12,9 @@ export const FONT_PATH = "/fonts/google-sans-flex.woff2";
 /** Routes that take a password: 4 KiB. Every other route: 16 KiB. */
 export const PASSWORD_BODY_LIMIT = 4 * 1024;
 export const ROUTE_BODY_LIMIT = 16 * 1024;
+/** The two upload routes take one file as the raw body: 20 MiB, the reader's own file limit (Decision 3). */
+export const UPLOAD_BODY_LIMIT = 20 * 1024 * 1024;
+export const UPLOAD_ROUTES: ReadonlySet<string> = new Set(["/api/upload", "/api/update/upload"]);
 const PASSWORD_ROUTES = new Set(["/api/password/create", "/api/login", "/api/delete"]);
 
 /** The only POST routes that work without a session. */
@@ -36,6 +39,7 @@ function headerValues(rawHeaders: string[], name: string): string[] {
 }
 
 export function bodyLimit(path: string): number {
+  if (UPLOAD_ROUTES.has(path)) return UPLOAD_BODY_LIMIT;
   return PASSWORD_ROUTES.has(path) ? PASSWORD_BODY_LIMIT : ROUTE_BODY_LIMIT;
 }
 

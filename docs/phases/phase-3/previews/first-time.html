@@ -333,8 +333,8 @@ svg.i { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor;
 .pick-rows { border-top: 1px solid var(--line); }
 .pick-row { display: grid; grid-template-columns: auto minmax(0, 1fr) 208px; gap: var(--s-3); align-items: center; padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
 .pick-row--plain { grid-template-columns: minmax(0, 1fr) 280px; }
-.pick-row__name { font-weight: 500; display: flex; flex-wrap: wrap; gap: 2px var(--s-2); align-items: center; }
-.pick-row__sub { font-size: var(--t-label); color: var(--ink-2); }
+.pick-row__name { font-weight: 500; display: flex; flex-wrap: wrap; gap: 2px var(--s-2); align-items: center; overflow-wrap: anywhere; }
+.pick-row__sub { font-size: var(--t-label); color: var(--ink-2); overflow-wrap: anywhere; }
 .pick-row .field__error { grid-column: 1 / -1; margin-top: 0; justify-self: end; }
 .only-narrow { display: none !important; }
 @media (max-width: 860px) {
@@ -385,6 +385,57 @@ a.btn, a.pop__opt { text-decoration: none; }
 a.pop__opt { color: var(--ink); }
 /* Day, month and year pickers under one label, in the Custom period dialog. */
 .date-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1.2fr); gap: var(--s-2); }
+
+/* ---------- Long setup lists (Phase 4, setup change) ----------
+   Groups that open and close, a search field, naming in place,
+   and a save bar that stays in reach on a long page. */
+.folds { border-top: 1px solid var(--line); }
+.fold { border-bottom: 1px solid var(--line); }
+.fold__head { display: flex; align-items: center; gap: var(--s-2); }
+.fold__btn { flex: 1; min-width: 0; min-height: 60px; display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-2) var(--s-3) 0; background: none; border: 0; border-radius: var(--r-control); text-align: left; cursor: pointer; }
+.fold__btn[disabled] { cursor: default; }
+.fold__text { flex: 1; min-width: 0; }
+.fold__name { display: block; font-weight: 500; overflow-wrap: anywhere; }
+.fold__sum { display: block; font-size: var(--t-label); color: var(--ink-2); }
+.fold__chev { color: var(--ink-2); transition: transform var(--m-out) var(--ease), color var(--m-in) var(--ease); }
+.fold__btn:hover .fold__chev { color: var(--ink); }
+.fold__btn[aria-expanded="true"] .fold__chev { transform: rotate(180deg); }
+.fold__body { padding: 0 0 var(--s-2) var(--s-5); animation: drop var(--m-out) var(--ease); }
+.fold--glyph .fold__body { padding-left: var(--s-7); }
+.fold__body .pick-rows { border-top: 1px solid var(--line); }
+.fold__body .pick-row:last-child { border-bottom: 0; }
+.fold__empty { padding: var(--s-3) 0; border-top: 1px solid var(--line); font-size: var(--t-label); color: var(--ink-2); }
+.search { position: relative; margin-bottom: var(--s-3); }
+.search > .i { position: absolute; left: var(--s-4); top: 15px; color: var(--ink-2); pointer-events: none; }
+.search .input { padding-left: calc(var(--s-4) + 18px + var(--s-2)); padding-right: var(--s-7); }
+.search .input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+[hidden] { display: none !important; }
+.search__count:empty { display: none; }
+.search__count { margin-bottom: var(--s-3); font-size: var(--t-label); color: var(--ink-2); }
+.search__none { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--s-1) var(--s-2); padding: var(--s-5) 0; border-top: 1px solid var(--line); color: var(--ink-2); text-align: center; }
+.inline-edit { padding: var(--s-3) 0; }
+.inline-edit__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); }
+.inline-edit__row .input { flex: 1 1 200px; width: auto; min-width: 0; }
+.add-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2) var(--s-3); padding-top: var(--s-3); }
+.add-row .field__hint { margin: 0; }
+.savebar { position: static; bottom: var(--s-4); z-index: 15; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); margin-top: var(--s-5); padding: var(--s-3) var(--s-3) var(--s-3) var(--s-5); background: var(--surface); border-radius: var(--r-card); box-shadow: var(--shadow-pop); }
+.savebar.is-dirty, .savebar.is-ok, .savebar.is-bad { position: sticky; }
+.savebar__text { flex: 1 1 auto; min-width: 0; display: flex; gap: var(--s-2); align-items: center; color: var(--ink-2); }
+.savebar.is-dirty .savebar__text, .savebar.is-ok .savebar__text, .savebar.is-bad .savebar__text { color: var(--ink); font-weight: 500; }
+.savebar.is-ok .savebar__text > .i { color: var(--gain); }
+.savebar.is-bad .savebar__text > .i { color: var(--danger); }
+.savebar__text:focus { outline: none; }
+@media (max-width: 860px) {
+  .savebar { bottom: calc(var(--s-8) + var(--s-3)); }
+}
+@media (max-width: 560px) {
+  .fold__body, .fold--glyph .fold__body { padding-left: var(--s-4); }
+}
+@media (max-width: 480px) {
+  .savebar { padding-left: var(--s-4); }
+  .savebar__text { flex-basis: 100%; }
+  .savebar .btn { flex: 1 1 0; }
+}
 </style>
 <style>
 /* Preview control only. Not part of the app. */
@@ -424,6 +475,9 @@ a.pop__opt { color: var(--ink); }
 <symbol id="i-fold" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15M16 9.5L13.5 12l2.5 2.5"/></symbol>
 <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.500 8.500V6.500a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/></symbol>
 <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.500 7h15M10 7V5h4v2M6.500 7l1 12a2 2 0 0 0 2 1.800h5a2 2 0 0 0 2-1.800l1-12M10.500 11v6M13.500 11v6"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
 </defs></svg>
 <div id="app"></div>
 <div class="pv" id="pv"></div>
@@ -433,11 +487,155 @@ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ic=(n,c='')=>`<svg class="i ${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const inr=n=>{const neg=n<0,s=Math.round(Math.abs(n)).toString(),a=s.slice(-3),b=s.slice(0,-3);return (neg?'−':'')+'₹'+(b?b.replace(/\B(?=(\d{2})+(?!\d))/g,',')+',':'')+a};
 const LOGO=`<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="7" fill="currentColor"/><path d="M7 16.500v-3M12 16.500v-6M17 16.500v-9" stroke="var(--logo-ink,#0C3A32)" stroke-width="2.400" stroke-linecap="round"/></svg>`;
-const ACC=[['Everyday Bank','Bank',184250],['Rainy Day Bank','Bank',312000],['Blue Rewards Card','Cards',-23400],['Pocket Wallet','Wallets',3500],['Index Fund','Investments',1260000],['Lent to Friend','',25000],['Work Expenses','',81000]];
-const CATS=[['Salary','Earned'],['Freelance','Earned'],['Market Gains','Returns'],['Bank Interest','Returns'],['Home Loan Received','Loan'],['No category','Earned']];
-const GROUPS=['Bank','Cards','Wallets','Investments','Money with others','Business'];
-const GI={Bank:'bank',Cards:'card',Wallets:'wallet',Investments:'trend','Money with others':'people',Business:'case','':'q'};
-const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MODE='first';
+/* ===== Setup lists, shared by screens 5 and 13. Preview code, not app code. =====
+   Made-up names, at the volume a real file has: 60 accounts, 31 income and 35 expense categories.
+   Income and Expenses are the same list: the owner's own groups, each category in one, subcategories follow. */
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const AG=['Bank','Cards','Wallets','Investments','Money with others','Business'];
+const GI={Bank:'bank',Cards:'card',Wallets:'wallet',Investments:'trend','Money with others':'people',Business:'case',Ungrouped:'q','':'q'};
+const ACC_BY={
+ Ungrouped:['Work Expenses','Old Wallet','Misc Account'],
+ Bank:['Everyday Bank','Rainy Day Bank','Salary Account','Joint Savings','Home Savings','Fixed Deposit 2024','Fixed Deposit 2025','Recurring Deposit'],
+ Cards:['Blue Rewards Card','Travel Miles Card','Fuel Card','Shopping Card','Office Card','Backup Card'],
+ Wallets:['Pocket Wallet','Cash at Home','Phone Wallet','Travel Cash','Metro Card','Gift Card Balance','Food Wallet'],
+ Investments:['Index Fund','Large Cap Fund','Mid Cap Fund','Small Cap Fund','Flexi Cap Fund','Debt Fund','Liquid Fund','Gold Fund','International Fund','Tax Saver Fund','Hybrid Fund','Shares Account','Retirement Fund','Provident Fund','Public Savings Scheme','Gold Coins','Bonds 2028','Bonds 2031','Pension Plan','Child Plan','Equity Basket','Silver Fund'],
+ 'Money with others':['Lent to Friend','Lent to Cousin','Deposit with Landlord','Owed by Flatmate','Security Deposit','Advance to Builder','Loan to Brother','Shared Trip Pot','Chit Group'],
+ Business:['Studio Account','Studio Card','Client Advances','Equipment Fund','Tax Reserve']};
+const ACC=[];Object.entries(ACC_BY).forEach(([g,l])=>l.forEach(n=>ACC.push({name:n,group:g})));
+const mk=([name,s,g])=>({name,subs:s?s.split(','):[],g});
+/* Third field: the group each category is in on screen 13's made-up saved answers. */
+const CATS={
+ inc:[['Salary','Base pay,Bonus,Overtime,Allowances,Employee share plan','w'],['Freelance','Design work,Writing,Consulting','w'],['Business income','Studio sales,Workshops','w'],['Interest','Savings interest,Deposit interest,Bond interest','s'],['Dividends','Shares,Funds','s'],['Capital gains','Equity,Debt,Gold','s'],['Rent received','Flat,Parking','s'],['Loans received','Home loan,Car loan,Personal loan',''],['Refunds','Shopping,Travel,Tax',''],['Cashback','Cards,Wallets',''],['Gifts received','Family,Festivals,Wedding','f'],['Prize money','',''],['Pension','',''],['Tutoring','Online,At home','w'],['Royalties','Books,Music','w'],['Insurance claims','Health,Vehicle',''],['Selling items','Furniture,Phones,Books',''],['Pocket money','','f'],['Tax refund','',''],['Side project','App sales,Ads,Sponsorships','w'],['Stipend','Fellowship,Research','w'],['Commission','Referrals,Sales','w'],['Maturity proceeds','Deposits,Insurance plans','s'],['Chit returns','','s'],['Reward points','',''],['Agriculture','Crops,Dairy','w'],['Retainers','Client one,Client two','w'],['Partnership share','','s'],['Family support','Parents,Sibling','f'],['Other income','Miscellaneous',''],['No category','','']].map(mk),
+ exp:[['Groceries','Vegetables,Staples,Dairy,Snacks','n'],['Eating out','Restaurants,Cafes,Delivery','w'],['Rent','Flat,Parking','n'],['Utilities','Electricity,Water,Gas,Internet,Phone','n'],['Transport','Fuel,Cabs,Metro,Servicing','n'],['Shopping','Clothes,Shoes,Gadgets,Home items','w'],['Health','Doctor,Medicines,Tests','n'],['Fitness','Gym,Classes,Gear','w'],['Education','Courses,Books,Fees','f'],['Entertainment','Movies,Streaming,Events','w'],['Travel','Flights,Trains,Hotels,Local travel','w'],['Gifts given','Family,Friends,Festivals','f'],['Household help','Cook,Cleaning','n'],['Home repairs','Plumbing,Electrical,Painting','n'],['Furniture','','b'],['Personal care','Salon,Toiletries','w'],['Kids','School,Toys,Clothes','f'],['Pets','Food,Vet','f'],['Insurance','Life,Vehicle,Home','n'],['Taxes','Income tax,Property tax','n'],['Loan payments','Home loan,Car loan','n'],['Charity','Donations,Temple',''],['Subscriptions','Software,News,Music','w'],['Bank charges','',''],['Parents','Medical,Monthly support','f'],['Hobbies','Music,Photography,Gardening','w'],['Festivals','Diwali,Holi,Weddings','f'],['Office','Lunch,Commute','n'],['Laundry','','n'],['Car care','Wash,Accessories',''],['Weekend trips','Stays,Food','w'],['Stationery','',''],['Mobile recharge','','n'],['Fines and fees','',''],['Miscellaneous','Other','']].map(mk)};
+const SAVED_GROUPS={inc:[{id:'w',name:'Work'},{id:'s',name:'From savings'},{id:'f',name:'Family and gifts'}],exp:[{id:'n',name:'Needs'},{id:'w',name:'Wants'},{id:'f',name:'Family'},{id:'b',name:'Big plans'}]};
+const GK=['inc','exp'];
+
+/* Answers being edited (A), what the owner sees open and searched (U), and where each row sits (HOME).
+   A row stays where it is after its picker changes, with a "Moved to" tag, so nothing jumps away
+   under the pointer. Rows settle into their new group when a group opens or closes, the search
+   changes, or the page loads again. */
+let A=null,HOME={acc:[],inc:[],exp:[]},gseq=100,onChange=()=>{};
+const U={open:{acc:new Set(),inc:new Set(),exp:new Set()},sopen:{acc:new Set(),inc:new Set(),exp:new Set()},q:{acc:'',inc:'',exp:''},edit:null,off:false};
+const home=()=>{HOME={acc:A.acc.slice(),inc:A.c.inc.slice(),exp:A.c.exp.slice()}};
+const plural=(n,one,many)=>n===0?'No '+many:n===1?'1 '+one:n+' '+many;
+const accKeys=()=>MODE==='first'?['',...AG]:['Ungrouped',...AG];
+const accOpts=()=>MODE==='first'?AG:['Ungrouped',...AG];
+const gName=(k,id)=>id?(A.g[k].find(g=>g.id===id)||{name:''}).name:'Not grouped';
+const gId=(k,name)=>name==='Not grouped'?'':(A.g[k].find(g=>g.name===name)||{id:''}).id;
+const accSum=g=>plural(A.acc.filter(x=>x===g).length,'account','accounts');
+const catSum=(k,id)=>plural(A.c[k].filter(x=>x===id).length,'category','categories');
+
+/* Picker, also used as the row menu. Arrow keys move, Enter picks, Esc closes. */
+const PK={};let open=null;
+function picker(id,value,opts,onPick,{label='',placeholder='Choose',sm}={}){PK[id]={value,opts,onPick};
+ return `<div class="picker ${sm?'picker--sm':''}" data-picker="${id}"><button type="button" class="picker__btn ${value?'':'is-empty'}" aria-haspopup="listbox" aria-expanded="false" aria-label="${esc(label)}" ${U.off?'disabled':''}><span class="picker__val">${esc(value||placeholder)}</span>${ic('chev')}</button></div>`}
+function closePop(focus){if(!open)return;const{el}=open;$(':scope > .pop',el)?.remove();const b=$(':scope > button',el);b.setAttribute('aria-expanded','false');if(focus)b.focus();open=null}
+function showPop(el,pop,type,items){el.append(pop);const r=el.getBoundingClientRect(),need=Math.min(290,pop.scrollHeight+8);if(innerHeight-r.bottom<need&&r.top>innerHeight-r.bottom)pop.classList.add('pop--up');$(':scope > button',el).setAttribute('aria-expanded','true');open={el,type,items};($('[aria-selected=true]',pop)||$('.pop__opt',pop)).focus()}
+function opt(text,sel,role){const b=document.createElement('button');b.type='button';b.className='pop__opt';b.setAttribute('role',role);if(role==='option')b.setAttribute('aria-selected',String(sel));const s=document.createElement('span');s.textContent=text;b.append(s);if(sel)b.insertAdjacentHTML('beforeend',ic('check'));return b}
+function openPicker(el){const p=PK[el.dataset.picker],opts=typeof p.opts==='function'?p.opts():p.opts;const pop=document.createElement('div');pop.className='pop';pop.setAttribute('role','listbox');
+ opts.forEach(o=>{const b=opt(o,o===p.value,'option');b.dataset.v=o;pop.append(b)});showPop(el,pop,'picker')}
+function openMenu(el,items){const pop=document.createElement('div');pop.className='pop';pop.setAttribute('role','menu');items.forEach((it,i)=>{const b=opt(it[0],false,'menuitem');b.dataset.i=i;pop.append(b)});showPop(el,pop,'menu',items)}
+
+/* Pieces */
+const searchBox=(k,ph)=>`<div class="search">${ic('search')}<label class="sr" for="q-${k}">${ph}</label><input class="input" type="search" id="q-${k}" data-q="${k}" placeholder="${ph}" autocomplete="off" spellcheck="false" value="${esc(U.q[k])}"><button class="input-wrap__btn" type="button" data-clear="${k}" aria-label="Clear search" ${U.q[k]?'':'hidden'}>${ic('x')}</button></div><p class="search__count" id="cnt-${k}" aria-live="polite"></p>`;
+const noneBox=k=>`<div class="search__none" id="none-${k}" hidden></div>`;
+function fold(k,key,i,o){const op=U.open[k].has(key);
+ const head=o.edit?inlineEdit():`<div class="fold__head"><button class="fold__btn" type="button" id="fh-${k}-${i}" aria-expanded="${op}" aria-controls="fb-${k}-${i}">${o.glyph?`<span class="glyph">${ic(o.glyph)}</span>`:''}<span class="fold__text"><span class="fold__name">${esc(o.name)}</span><span class="fold__sum" data-sum>${esc(o.sum)}</span></span>${ic('chev','fold__chev')}</button>${o.menu||''}</div>`;
+ return `<div class="fold ${o.glyph?'fold--glyph':''}" data-fold="${k}" data-key="${esc(key)}" data-s="${esc(o.s||'')}">${head}<div class="fold__body" id="fb-${k}-${i}" ${op?'':'hidden'}><div class="pick-rows" ${o.rows?'':'hidden'}>${o.rows}</div><p class="fold__empty" ${o.rows?'hidden':''}>Nothing in this group yet.</p></div></div>`}
+const movedTag=(show,to)=>`<span class="tag" data-moved ${show?'':'hidden'}>${show?'Moved to '+esc(to):''}</span>`;
+
+/* Accounts */
+function accRow(a,j){const v=A.acc[j],h=HOME.acc[j],sug=MODE==='first'&&a.sug&&v===a.group;
+ return `<div class="pick-row pick-row--plain" data-row="acc" data-j="${j}" data-s="${esc(a.name.toLowerCase())}"><div class="pick-row__name"><span>${esc(a.name)}</span>${sug?'<span class="tag" data-sug>Suggested</span>':''}${movedTag(h!==''&&v!==h,v)}</div>${picker('acc'+j,v,accOpts,x=>pickAcc(j,x),{label:'Group for '+a.name,placeholder:'Choose a group'})}</div>`}
+const accList=()=>`${searchBox('acc','Find an account')}<div class="folds" id="folds-acc">${accKeys().map((g,i)=>fold('acc',g,i,{glyph:GI[g],name:g===''?'Needs a group':g,s:g.toLowerCase(),sum:accSum(g),rows:ACC.map((a,j)=>HOME.acc[j]===g?accRow(a,j):'').join('')})).join('')}</div>${noneBox('acc')}`;
+function pickAcc(j,v){A.acc[j]=v;const r=$(`[data-row=acc][data-j="${j}"]`),f=r.closest('.fold').dataset.key;if(v!==ACC[j].group)$('[data-sug]',r)?.remove();
+ const t=$('[data-moved]',r),mv=f!==''&&v!==f;t.hidden=!mv;t.textContent=mv?'Moved to '+v:'';r.classList.remove('is-bad');$('.field__error',r)?.remove();sums('acc');onChange('acc')}
+
+/* Income and expenses: one builder for both */
+function catRow(k,c,j){const v=A.c[k][j],h=HOME[k][j];
+ return `<div class="pick-row pick-row--plain" data-row="${k}" data-j="${j}" data-s="${esc((c.name+' '+c.subs.join(' ')).toLowerCase())}"><div><div class="pick-row__name"><span>${esc(c.name)}</span>${movedTag(v!==h,gName(k,v))}</div>${c.subs.length?`<div class="pick-row__sub">${esc(c.subs.join(' · '))}</div>`:''}</div>${A.g[k].length?picker(k+j,gName(k,v),()=>['Not grouped',...A.g[k].map(g=>g.name)],x=>pickCat(k,j,x),{label:'Group for '+c.name}):''}</div>`}
+const menuBtn=(k,g)=>`<div class="menu"><button class="btn btn--sm btn--icon btn--quiet" type="button" data-menu="${esc(g.id)}" data-k="${k}" aria-haspopup="menu" aria-expanded="false" aria-label="Options for ${esc(g.name)}" ${U.off?'disabled':''}>${ic('more')}</button></div>`;
+function inlineEdit(){const m=U.edit,add=m.mode==='add';
+ return `<div class="inline-edit ${m.err?'is-bad':''}"><label class="field__label" for="ge">${add?'New group name':'Group name'}</label><div class="inline-edit__row"><input class="input" id="ge" value="${esc(m.value)}" autocomplete="off" spellcheck="false" aria-describedby="ge-msg" ${m.err?'aria-invalid="true"':''}><button class="btn" type="button" data-edit-ok>${add?'Add group':'Rename'}</button><button class="btn btn--quiet" type="button" data-edit-cancel>Cancel</button></div>${editMsg()}</div>`}
+const editMsg=()=>U.edit.err?`<p class="field__error" id="ge-msg">${ic('alert')}<span>${esc(U.edit.err)}</span></p>`:`<p class="field__hint" id="ge-msg">Up to 40 characters.</p>`;
+function addRow(k){if(U.edit&&U.edit.k===k&&U.edit.mode==='add')return inlineEdit();const n=A.g[k].length;
+ return `<div class="add-row">${n>=12?`<p class="field__hint" id="limit-${k}">You have 12 groups, the most you can have. Remove one to add another.</p>`:`<button class="btn btn--sm" type="button" id="add-${k}" data-add="${k}" ${U.off?'disabled':''}>${ic('plus')}Add a group</button><p class="field__hint">${n?n+' of 12 groups.':'Up to 12 groups, such as '+(k==='inc'?'Work and Savings':'Needs and Wants')+'.'}</p>`}</div>`}
+const catList=k=>`${searchBox(k,'Find a category')}<div class="folds" id="folds-${k}">${[{id:'',name:'Not grouped'},...A.g[k]].map((g,i)=>fold(k,g.id,i,{name:g.name,s:g.id?g.name.toLowerCase():'',sum:catSum(k,g.id),menu:g.id?menuBtn(k,g):'',edit:U.edit&&U.edit.k===k&&U.edit.mode==='rename'&&U.edit.id===g.id,rows:CATS[k].map((c,j)=>HOME[k][j]===g.id?catRow(k,c,j):'').join('')})).join('')}</div>${noneBox(k)}${addRow(k)}`;
+function pickCat(k,j,name){const id=gId(k,name);A.c[k][j]=id;const r=$(`[data-row=${k}][data-j="${j}"]`),f=r.closest('.fold').dataset.key,t=$('[data-moved]',r),mv=id!==f;t.hidden=!mv;t.textContent=mv?'Moved to '+name:'';sums(k);onChange(k)}
+function checkName(k,v,self){const t=v.trim(),low=t.toLowerCase();if(!t)return'Give the group a name.';if([...t].length>40)return'Use 40 characters or fewer.';
+ if(low==='not grouped')return'“Not grouped” is kept for categories without a group.';const d=A.g[k].find(g=>g.id!==self&&g.name.toLowerCase()===low);if(d)return`You already have a group called “${d.name}”.`;return''}
+const foldHead=(k,key)=>$(`.fold[data-fold=${k}][data-key="${key}"] .fold__btn`);
+function startAdd(k){if(U.edit)cancelEdit(true);U.edit={k,mode:'add',value:'',err:''};redraw(k);$('#ge').focus()}
+function startRename(k,id){if(U.edit)cancelEdit(true);U.edit={k,mode:'rename',id,value:gName(k,id),err:''};redraw(k);$('#ge').select()}
+function cancelEdit(quiet){const m=U.edit;U.edit=null;redraw(m.k);if(!quiet)(m.mode==='add'?$('#add-'+m.k):foldHead(m.k,m.id))?.focus()}
+function submitEdit(){const m=U.edit,k=m.k,v=$('#ge').value;m.value=v;m.tried=true;m.err=checkName(k,v,m.id);if(m.err){editErr();$('#ge').focus();return}
+ const t=v.trim();let id=m.id;if(m.mode==='add'){id='g'+(++gseq);A.g[k].push({id,name:t});if(A.g[k].length===1)U.open[k].add('')}else A.g[k].find(g=>g.id===id).name=t;
+ U.edit=null;redraw(k);foldHead(k,id)?.focus();onChange(k)}
+function editErr(){const w=$('.inline-edit'),i=$('#ge');w.classList.toggle('is-bad',!!U.edit.err);i.toggleAttribute('aria-invalid',!!U.edit.err);$('#ge-msg').outerHTML=editMsg()}
+function askRemove(k,id){const g=A.g[k].find(x=>x.id===id),n=A.c[k].filter(x=>x===id).length;
+ const go=()=>{A.c[k]=A.c[k].map(x=>x===id?'':x);HOME[k]=HOME[k].map(x=>x===id?'':x);A.g[k]=A.g[k].filter(x=>x.id!==id);U.open[k].delete(id);redraw(k);foldHead(k,'')?.focus();onChange(k)};
+ if(!n){go();return}
+ dialog(`Remove “${esc(g.name)}”?`,`${n===1?'Its 1 category goes':'Its '+n+' categories go'} back to Not grouped.${MODE==='first'?'':' Nothing changes until you save.'}`,'Keep group','Remove group',go,foldHead(k,id),true)}
+
+/* Open, close, search and settle */
+function setOpen(f,o){const b=$('.fold__btn',f),body=$('.fold__body',f);b&&b.setAttribute('aria-expanded',String(o));if(body.hidden===o)body.hidden=!o}
+function sums(k){$$(`.fold[data-fold=${k}]`).forEach(f=>{const s=$('[data-sum]',f);if(s)s.textContent=k==='acc'?accSum(f.dataset.key):catSum(k,f.dataset.key)})}
+function settle(k){const box=$('#folds-'+k);if(!box)return;const val=j=>k==='acc'?A.acc[j]:A.c[k][j],to={};
+ $$('.fold',box).forEach(f=>to[f.dataset.key]=$('.pick-rows',f));
+ $$('[data-row]',box).sort((a,b)=>a.dataset.j-b.dataset.j).forEach(r=>{const t=to[val(+r.dataset.j)];t&&t.append(r)});
+ $$('[data-moved]',box).forEach(t=>t.hidden=true);
+ $$('.fold',box).forEach(f=>{const pr=$('.pick-rows',f),has=pr.children.length>0;pr.hidden=!has;$('.fold__empty',f).hidden=has});
+ HOME[k]=(k==='acc'?A.acc:A.c[k]).slice()}
+function filter(k,reopen){const box=$('#folds-'+k);if(!box)return;const raw=U.q[k].trim(),q=raw.toLowerCase();let n=0,shown=0;if(reopen)U.sopen[k]=new Set();
+ [...box.children].forEach(f=>{const hit=!!q&&!!f.dataset.s&&f.dataset.s.includes(q);let any=0;
+  $$('[data-row]',f).forEach(r=>{const m=!q||hit||r.dataset.s.includes(q);r.hidden=!m;if(m)any++});
+  f.hidden=!!q&&!any&&!hit;if(!f.hidden){shown++;n+=any}if(q&&reopen&&!f.hidden)U.sopen[k].add(f.dataset.key);
+  setOpen(f,q?U.sopen[k].has(f.dataset.key):U.open[k].has(f.dataset.key))});
+ box.hidden=!!q&&!shown;const cnt=$('#cnt-'+k),none=$('#none-'+k);
+ if(!q){cnt.textContent='';none.hidden=true;return}
+ cnt.textContent=shown?(n===1?'1 match':n+' matches'):'';none.hidden=!!shown;
+ if(!shown)none.innerHTML=`<span>Nothing matches “${esc(raw)}”.</span><button class="link" type="button" data-clear="${k}">Clear search</button>`}
+function redraw(k){const w=$('#list-'+k);if(!w)return;w.innerHTML=k==='acc'?accList():catList(k);if(U.q[k].trim())filter(k,true)}
+function kitAfter(){['acc','inc','exp'].forEach(k=>{if(U.q[k].trim())filter(k,true)})}
+function clearSearch(k){U.q[k]='';const i=$('#q-'+k);i.value='';$(`.search [data-clear=${k}]`).hidden=true;settle(k);filter(k,true);i.focus()}
+
+/* Dialog: traps focus, starts on the safe button */
+function dialog(title,text,keep,go,onGo,back,danger){const s=document.createElement('div');s.className='scrim';
+ s.innerHTML=`<div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dt" aria-describedby="dd"><h2 id="dt">${title}</h2><p id="dd">${text}</p><div class="btn-row"><button class="btn" id="dk" data-esc>${keep}</button><button class="btn ${danger?'btn--danger':'btn--primary'}" id="dg">${go}</button></div></div>`;
+ document.body.append(s);$('#dk').focus();$('#dk').onclick=()=>{s.remove();back&&back.isConnected&&back.focus()};$('#dg').onclick=()=>{s.remove();onGo()};
+ s.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();($('#dk')===document.activeElement?$('#dg'):$('#dk')).focus()}})}
+
+/* Events, shared */
+document.addEventListener('click',e=>{const o=e.target.closest('.pop__opt');
+ if(o&&open&&open.el.contains(o)){const m=open;if(m.type==='picker'){const p=PK[m.el.dataset.picker];p.value=o.dataset.v;const b=$(':scope > button',m.el);$('.picker__val',b).textContent=p.value;b.classList.remove('is-empty');closePop(true);p.onPick(p.value)}else{const fn=m.items[+o.dataset.i][1];closePop(false);fn()}return}
+ const pb=e.target.closest('.picker__btn');if(pb){const el=pb.parentElement,same=open&&open.el===el;closePop();if(!same)openPicker(el);return}
+ const mb=e.target.closest('[data-menu]');if(mb){const el=mb.parentElement,same=open&&open.el===el,id=mb.dataset.menu,k=mb.dataset.k;closePop();if(!same)openMenu(el,[['Rename',()=>startRename(k,id)],['Remove',()=>askRemove(k,id)]]);return}
+ if(open&&!e.target.closest('.pop'))closePop();
+ if(!e.target.closest('.pv'))$('.pv__menu')?.remove();
+ const fb=e.target.closest('.fold__btn');if(fb){const f=fb.closest('.fold'),k=f.dataset.fold,key=f.dataset.key,op=fb.getAttribute('aria-expanded')!=='true';settle(k);filter(k,false);const set=U.q[k].trim()?U.sopen[k]:U.open[k];op?set.add(key):set.delete(key);setOpen(f,op);return}
+ const cl=e.target.closest('[data-clear]');if(cl){clearSearch(cl.dataset.clear);return}
+ const ad=e.target.closest('[data-add]');if(ad){startAdd(ad.dataset.add);return}
+ if(e.target.closest('[data-edit-ok]')){submitEdit();return}
+ if(e.target.closest('[data-edit-cancel]')){cancelEdit();return}});
+document.addEventListener('input',e=>{const t=e.target;
+ if(t.dataset.q){const k=t.dataset.q;U.q[k]=t.value;$(`.search [data-clear=${k}]`).hidden=!t.value;settle(k);filter(k,true)}
+ if(t.id==='ge'&&U.edit){U.edit.value=t.value;if(U.edit.tried){U.edit.err=checkName(U.edit.k,t.value,U.edit.id);editErr()}}});
+document.addEventListener('keydown',e=>{const t=e.target;
+ if(t.id==='ge'){if(e.key==='Enter'){e.preventDefault();submitEdit()}else if(e.key==='Escape'){e.preventDefault();cancelEdit()}return}
+ if(t.dataset&&t.dataset.q&&e.key==='Escape'&&t.value){e.preventDefault();clearSearch(t.dataset.q);return}
+ if(e.key==='Escape'){if(open)closePop(true);else $('.scrim [data-esc]')?.click()}
+ if(open&&e.key==='Tab')closePop();
+ if(open&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();const o=$$('.pop__opt',open.el),i=o.indexOf(document.activeElement);o[(i+(e.key==='ArrowDown'?1:-1)+o.length)%o.length].focus()}});
+/* Screen 5 data: balances are only for the summary, setup doesn't show them. 8 accounts have no suggestion. */
+const BASE={Ungrouped:6000,Bank:42000,Cards:-7000,Wallets:1800,Investments:26000,'Money with others':14000,Business:21000};
+ACC.forEach((a,j)=>a.bal=Math.round(BASE[a.group]*(1+(j%5)*.35)/50)*50);
+{const t=ACC.reduce((s,a)=>s+a.bal,0);ACC.find(a=>a.name==='Index Fund').bal+=1842350-t}
+const NOSUG=['Work Expenses','Old Wallet','Misc Account','Chit Group','Studio Card','Gold Coins','Metro Card','Shared Trip Pot'];
+ACC.forEach(a=>a.sug=!NOSUG.includes(a.name));
+const fresh=()=>({acc:ACC.map(a=>a.sug?a.group:''),g:{inc:[],exp:[]},c:{inc:CATS.inc.map(()=>''),exp:CATS.exp.map(()=>'')}});
+const resetSetup=()=>{A=fresh();U.open={acc:new Set(['']),inc:new Set(),exp:new Set()};U.q={acc:'',inc:'',exp:''};U.edit=null;home()};
+resetSetup();
 const SERIES=[['Dec',175,96],['Jan',175,104],['Feb',175,88],['Mar',175,112],['Apr',175,92],['May',175,118],['Jun',178,101],['Jul',178,84],['Aug',178,131],['Sep',178,102],['Oct',183,115],['Nov',185,41]];
 const NW=[12.3,12.6,12.9,13.1,13.6,14.0,14.5,14.7,15.5,16.3,17.4,18.4];
 const PERIODS={
@@ -445,29 +643,11 @@ const PERIODS={
  'Last 12 months':{range:'8 Nov 2025 to 7 Nov 2026',delta:612300,earned:2130000,spent:1184000,saved:946000,rate:44,invested:480000,cats:[['Rent',216000],['Groceries',198400],['Travel',164200],['Eating out',132600],['Bills',86900]]},
  'Financial year':{range:'1 Apr to 7 Nov 2026',delta:394100,earned:1290000,spent:702000,saved:588000,rate:46,invested:280000,cats:[['Rent',144000],['Groceries',122300],['Travel',106500],['Eating out',84100],['Bills',52700]]},
  'All':{range:'Apr 2021 to Nov 2026',delta:1842350,earned:9840000,spent:6120000,saved:3720000,rate:38,invested:1510000,cats:[['Rent',1120000],['Groceries',986000],['Travel',742000],['Eating out',631000],['Bills',418000]]}};
-const S={view:'password',setup:1,groups:ACC.map(a=>a[1]),cats:CATS.map(c=>c[1]),reimb:'',month:'Apr',year:'2021',refused:false,tried:false,period:'This month',done:{}};
+const S={view:'password',setup:1,noInc:false,refused:false,tried:false,period:'This month',done:{}};
 const ORDER=['password','upload','setup','summary','overview'];
 let lastIdx=0;
 function go(v,o={}){const i=ORDER.indexOf(v);document.documentElement.style.setProperty('--dir',i<lastIdx?'-8px':'8px');lastIdx=i;S.view=v;Object.assign(S,o);render();scrollTo(0,0)}
-function render(){closePop();app.innerHTML=V[S.view]();const b=$('.task__body')||$('.page');b&&b.classList.add('enter');A[S.view]?.();}
-
-/* Picker */
-const PK={};let open=null;
-function picker(id,value,opts,onPick,{placeholder='Choose',label,sm,up,icon}={}){PK[id]={value,opts,onPick,placeholder,icon};
- return `<div class="picker ${sm?'picker--sm':''}" data-picker="${id}" data-up="${up?1:''}"><button type="button" class="picker__btn ${value?'':'is-empty'}" aria-haspopup="listbox" aria-expanded="false" aria-label="${label||''}"><span class="picker__val">${value||placeholder}</span>${ic('chev')}</button></div>`}
-function closePop(focus){if(!open)return;const{el}=open;$('.pop',el)?.remove();const b=$('.picker__btn',el);b.setAttribute('aria-expanded','false');if(focus)b.focus();open=null}
-function openPop(el){const id=el.dataset.picker,p=PK[id];const pop=document.createElement('div');pop.className='pop'+(el.dataset.up?' pop--up':'');pop.setAttribute('role','listbox');
- pop.innerHTML=p.opts.map(o=>`<button type="button" class="pop__opt" role="option" aria-selected="${o===p.value}" data-v="${o}"><span>${o}</span>${o===p.value?ic('check'):''}</button>`).join('');
- el.append(pop);$('.picker__btn',el).setAttribute('aria-expanded','true');open={el,id};($('[aria-selected=true]',pop)||$('.pop__opt',pop)).focus()}
-document.addEventListener('click',e=>{const opt=e.target.closest('.pop__opt');
- if(opt&&open){const{el,id}=open,p=PK[id];p.value=opt.dataset.v;const btn=$('.picker__btn',el);$('.picker__val',btn).textContent=p.value;btn.classList.remove('is-empty');closePop(true);p.onPick(p.value);return}
- const btn=e.target.closest('.picker__btn');
- if(btn){const el=btn.parentElement,same=open&&open.el===el;closePop();if(!same)openPop(el);return}
- if(open&&!e.target.closest('.pop'))closePop();
- if(!e.target.closest('.pv'))$('.pv__menu')?.remove()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(open)closePop(true);else{const d=$('.scrim');d&&d.remove()}}
- if(open&&e.key==='Tab')closePop();
- if(open&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();const o=$$('.pop__opt',open.el),i=o.indexOf(document.activeElement);o[(i+(e.key==='ArrowDown'?1:-1)+o.length)%o.length].focus()}});
+function render(){closePop();app.innerHTML=V[S.view]();const b=$('.task__body')||$('.page');b&&b.classList.add('enter');AF[S.view]?.();kitAfter()}
 
 /* Task frame */
 const STEPS=['Create password','Add your export','Set up','Confirm'];
@@ -489,17 +669,11 @@ password:()=>task(0,`<h1>Create your password</h1>
 upload:()=>task(1,`<h1>Add your export</h1><p class="task__lede">Use the Excel file from Money Manager. It's read here, and the file is never sent anywhere.</p>
  ${S.refused?`<div class="note note--danger" id="ref" style="margin-bottom:16px">${ic('alert')}<div class="note__body"><strong>The columns don't match the expected export.</strong><br><span class="muted">Nothing was saved. Export again from Money Manager and drop the new file here.</span></div></div>`:''}
  <div class="drop" id="drop"><span class="glyph">${ic('file')}</span><strong class="only-wide">Drop your export here</strong><strong class="only-narrow">Choose your export</strong><p class="muted only-wide" style="margin-bottom:12px">or choose it from your Mac</p><button class="btn" type="button" id="good" style="margin-top:8px">Choose file</button></div>`),
-setup:()=>{const n=S.setup;let b='';
- if(n===1)b=`<div class="task__eyebrow">Part 1 of 3</div><h1>Group your accounts</h1><p class="task__lede">We found these in your file and suggested what we could.</p>
-  <div class="pick-rows">${ACC.map((a,i)=>`<div class="pick-row" id="row${i}"><span class="glyph" id="g${i}">${ic(GI[S.groups[i]])}</span><div><div class="pick-row__name"><span>${a[0]}</span>${a[1]&&S.groups[i]===a[1]?`<span class="tag" id="t${i}">Suggested</span>`:''}</div><div class="pick-row__sub">${inr(a[2])}</div></div>${picker('acc'+i,S.groups[i],GROUPS,v=>pickGroup(i,v),{placeholder:'Choose a group',label:'Group for '+a[0],up:i>4})}</div>`).join('')}</div>
-  <div style="margin-top:16px"><div class="label" id="cnt" style="margin-bottom:6px"></div><div class="meter"><div id="cm"></div></div></div>`;
- if(n===2)b=`<div class="task__eyebrow">Part 2 of 3</div><h1>Sort your income</h1><p class="task__lede">Only Earned counts towards your savings rate. Returns and loans show separately.</p>
-  <div class="pick-rows">${CATS.map((c,i)=>`<div class="pick-row pick-row--plain"><span class="pick-row__name">${c[0]}</span><div class="seg" role="radiogroup" aria-label="${c[0]}" data-i="${['Earned','Returns','Loan'].indexOf(S.cats[i])}"><span class="seg__thumb"></span>${['Earned','Returns','Loan'].map((k,j)=>`<label><input type="radio" name="c${i}" data-cat="${i}" data-j="${j}" value="${k}" ${S.cats[i]===k?'checked':''}><span>${k}</span></label>`).join('')}</div></div>`).join('')}</div>`;
- if(n===3)b=`<div class="task__eyebrow">Part 3 of 3</div><h1>Two last details</h1><p class="task__lede">You can change these any time in Settings.</p>
-  <div class="field"><span class="field__label">Which account tracks money you're paid back?</span>${picker('re',S.reimb||"I don't have one",["I don't have one",...ACC.map(a=>a[0])],v=>S.reimb=v,{label:'Reimbursement account'})}</div>
-  <div class="field"><span class="field__label">When does your history become reliable?</span><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">${picker('mo',S.month,MONTHS,v=>S.month=v,{label:'Month',up:true})}${picker('yr',S.year,['2021','2022','2023','2024','2025','2026'],v=>S.year=v,{label:'Year',up:true})}</div><p class="field__hint">Spending trends start here. Net worth always uses your full history.</p></div>`;
- return task(2,`${b}<div class="task__actions"><button class="btn btn--primary" id="next">${n===3?'Save and continue':'Continue'}</button>${n>1?'<button class="btn" id="back">Back</button>':''}</div>`,true)},
-summary:()=>{const total=ACC.reduce((t,a)=>t+a[2],0);const by={};ACC.forEach((a,i)=>{const g=S.groups[i]||'Ungrouped';(by[g]=by[g]||{t:0,n:0}).t+=a[2];by[g].n++});
+setup:()=>{const parts=setupParts(),n=S.setup,[k,t,l]=parts[n-1],last=n===parts.length;
+ return task(2,`<div class="task__eyebrow">Part ${n} of ${parts.length}</div><h1>${t}</h1><p class="task__lede">${l}</p><div id="list-${k}">${k==='acc'?accList():catList(k)}</div>
+  ${k==='acc'?'<div class="mt-4"><div class="label mb-1" id="cnt"></div><div class="meter"><div id="cm"></div></div></div>':''}
+  <div class="task__actions"><button class="btn btn--primary" id="next">${last?'Save and continue':'Continue'}</button>${n>1?'<button class="btn" id="back">Back</button>':''}</div>`,true)},
+summary:()=>{const total=ACC.reduce((t,a)=>t+a.bal,0);const by={};ACC.forEach((a,i)=>{const g=A.acc[i]||'Ungrouped';(by[g]=by[g]||{t:0,n:0}).t+=a.bal;by[g].n++});
  return task(3,`<h1>Does this look right?</h1><p class="task__lede">Compare this with your Money Manager app before you carry on.</p>
  <div class="card"><div class="label">Net worth today</div><div class="figure figure--display num" style="margin:4px 0 8px">${inr(total)}</div><div class="muted">8,412 rows from 1 Apr 2021 to 7 Nov 2026</div>
  <ul class="list" style="margin-top:12px">${Object.entries(by).map(([g,v])=>`<li><span style="display:flex;gap:12px;align-items:center;min-width:0"><span class="glyph">${ic(GI[g]||'q')}</span><span>${g}<span class="muted"> · ${v.n}</span></span></span><span class="num">${inr(v.t)}</span></li>`).join('')}</ul></div>
@@ -527,9 +701,9 @@ overview:()=>{const p=PERIODS[S.period];const nav=[['Overview','home'],['Spendin
  </div></main></div>
  <nav class="tabbar" aria-label="Screens">${nav.map((n,i)=>`<a href="#" ${i===0?'aria-current="page"':''}>${ic(n[1])}${short[i]}</a>`).join('')}</nav></div>`}
 };
-function pickGroup(i,v){S.groups[i]=v;$('#g'+i).innerHTML=ic(GI[v]);if(v!==ACC[i][1])$('#t'+i)?.remove();$('#row'+i).classList.remove('is-bad');$('#e'+i)?.remove();count()}
-function count(){const n=S.groups.filter(Boolean).length;const c=$('#cnt');if(c){c.textContent=`${n} of ${ACC.length} grouped`;$('#cm').style.width=n/ACC.length*100+'%'}}
-const A={
+const setupParts=()=>[['acc','Group your accounts','We found these in your file and suggested what we could.'],...(S.noInc?[]:[['inc','Group your income','Make groups such as Work and Savings, and put each category in one. You can do this later in Settings.']]),['exp','Group your expenses','Make groups such as Needs and Wants, and put each category in one. You can do this later in Settings.']];
+function count(){const n=A.acc.filter(Boolean).length;const c=$('#cnt');if(c){c.textContent=`${n} of ${ACC.length} grouped`;$('#cm').style.width=n/ACC.length*100+'%'}}
+const AF={
 password(){$$('.input-wrap__btn').forEach(b=>b.onclick=()=>{const i=$('#'+b.dataset.for),t=i.type==='password';i.type=t?'text':'password';b.innerHTML=ic(t?'eye-off':'eye');b.setAttribute('aria-label',t?'Hide password':'Show password')});
  const set=(id,msg)=>{const w=$('#'+id);w.classList.toggle('is-bad',!!msg);$('.field__error',w)?.remove();if(msg){const d=document.createElement('p');d.className='field__error';d.innerHTML=ic('alert')+msg;w.append(d)}return !msg};
  const tooEasy=a=>/^(.)\1*$/u.test(a)||['123456789012345','passwordpassword','qwertyuiopasdfg'].includes(a.toLowerCase());
@@ -542,15 +716,16 @@ upload(){const d=$('#drop');
  $('#good').onclick=()=>{S.refused=false;$('#ref')?.remove();d.innerHTML=`<span class="glyph">${ic('file')}</span><strong id="stage">Checking the file</strong><div class="meter" style="width:100%;max-width:280px;margin-top:12px"><div id="um"></div></div>`;
   const st=['Checking the file','Reading rows','Adding up balances'];let i=0;requestAnimationFrame(()=>$('#um').style.width='33%');
   const t=setInterval(()=>{i++;if(i<3){$('#stage').textContent=st[i];$('#um').style.width=(i+1)*33.4+'%'}else{clearInterval(t);S.done.file=1;go('setup',{setup:1,tried:false})}},reduce?250:620)}},
-setup(){count();
- $$('[data-cat]').forEach(r=>r.onchange=()=>{S.cats[+r.dataset.cat]=r.value;r.closest('.seg').dataset.i=r.dataset.j});
- const step=n=>{document.documentElement.style.setProperty('--dir',n>S.setup?'8px':'-8px');S.setup=n;render();scrollTo(0,0)};
+setup(){count();onChange=k=>{if(k==='acc')count()};const parts=setupParts();
+ const step=n=>{document.documentElement.style.setProperty('--dir',n>S.setup?'8px':'-8px');S.setup=n;home();render();scrollTo(0,0)};
  $('#back')&&($('#back').onclick=()=>step(S.setup-1));
- $('#next').onclick=()=>{if(S.setup===1){let first=-1;S.groups.forEach((g,i)=>{if(!g){if(first<0)first=i;const r=$('#row'+i);r.classList.add('is-bad');if(!$('#e'+i)){const e=document.createElement('p');e.className='field__error';e.id='e'+i;e.innerHTML=ic('alert')+'Choose a group.';r.append(e)}}});if(first>=0){$(`[data-picker=acc${first}] .picker__btn`).focus();return}}
-  if(S.setup===3){const b=$('#next');b.disabled=true;b.textContent='Saving…';setTimeout(()=>{S.done.setup=1;go('summary')},500);return}
+ $('#next').onclick=()=>{const k=parts[S.setup-1][0];
+  if(k==='acc'){let first=null;ACC.forEach((a,j)=>{if(A.acc[j])return;const r=$(`[data-row=acc][data-j="${j}"]`);r.classList.add('is-bad');if(!$('.field__error',r)){const e=document.createElement('p');e.className='field__error';e.innerHTML=ic('alert')+'Choose a group.';r.append(e)}first=first||r});
+   if(first){if(U.q.acc)clearSearch('acc');const f=first.closest('.fold');U.open.acc.add(f.dataset.key);setOpen(f,true);$('.picker__btn',first).focus();return}}
+  if(S.setup===parts.length){const b=$('#next');b.disabled=true;b.textContent='Saving…';setTimeout(()=>{S.done.setup=1;go('summary')},500);return}
   step(S.setup+1)}},
-summary(){$('#yes').onclick=()=>{S.first=true;go('overview')};$('#back').onclick=()=>go('setup',{setup:3});
- $('#over').onclick=()=>{const s=document.createElement('div');s.className='scrim';s.innerHTML=`<div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dt"><h2 id="dt">Start over?</h2><p>This removes the import and your setup answers. You'll add the file again.</p><div class="btn-row"><button class="btn" id="keep">Keep going</button><button class="btn btn--danger" id="wipe">Start over</button></div></div>`;document.body.append(s);$('#keep').focus();$('#keep').onclick=()=>{s.remove();$('#over').focus()};$('#wipe').onclick=()=>{s.remove();S.done={pw:1};go('upload',{groups:ACC.map(a=>a[1]),cats:CATS.map(c=>c[1])})}}},
+summary(){$('#yes').onclick=()=>{S.first=true;go('overview')};$('#back').onclick=()=>{home();go('setup',{setup:setupParts().length})};
+ $('#over').onclick=()=>{const s=document.createElement('div');s.className='scrim';s.innerHTML=`<div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dt"><h2 id="dt">Start over?</h2><p>This removes the import and your setup answers. You'll add the file again.</p><div class="btn-row"><button class="btn" id="keep" data-esc>Keep going</button><button class="btn btn--danger" id="wipe">Start over</button></div></div>`;document.body.append(s);$('#keep').focus();$('#keep').onclick=()=>{s.remove();$('#over').focus()};$('#wipe').onclick=()=>{s.remove();S.done={pw:1};resetSetup();go('upload')}}},
 overview(){$('#dis').onclick=()=>$('#rem').remove();
  const shell=$('.shell'),fold=$('#fold');const setFold=c=>{shell.classList.toggle('is-collapsed',c);fold.setAttribute('aria-expanded',String(!c));fold.setAttribute('aria-label',c?'Expand sidebar':'Collapse sidebar');try{localStorage.setItem('side',c?'1':'0')}catch{}};
  let saved=false;try{saved=localStorage.getItem('side')==='1'}catch{}setFold(saved);
@@ -579,8 +754,13 @@ let rz;addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(S.v
 const pv=$('#pv');pv.innerHTML='<button class="pv__btn" type="button" aria-expanded="false">Preview</button>';
 const toggleTheme=()=>{const r=document.documentElement,dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark'};
 $('.pv__btn').onclick=()=>{const m=$('.pv__menu');if(m){m.remove();return}const d=document.createElement('div');d.className='pv__menu';
- d.innerHTML=`<p>Made-up data. Please don't use your real password or file.</p><hr>${[['password','1 Password'],['upload','2 Add export'],['setup','3 Set up'],['summary','4 Confirm'],['overview','5 Dashboard']].map(x=>`<button type="button" data-go="${x[0]}">${x[1]}</button>`).join('')}<hr><button type="button" data-a="bad">Show a refused file</button><button type="button" data-a="theme">Switch light and dark</button>`;
- pv.append(d);d.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.go){S.done={pw:1,file:1,setup:1};if(b.dataset.go==='password')S.done={};if(b.dataset.go==='upload')S.done={pw:1};if(b.dataset.go==='setup')S.done={pw:1,file:1};go(b.dataset.go,{setup:1,tried:false,refused:false})}if(b.dataset.a==='bad'){S.done={pw:1};go('upload',{refused:true})}if(b.dataset.a==='theme')toggleTheme();d.remove()}};
+ d.innerHTML=`<p>Made-up data. Please don't use your real password or file.</p><hr>${[['password','1 Password'],['upload','2 Add export'],['setup','3 Set up'],['summary','4 Confirm'],['overview','5 Dashboard']].map(x=>`<button type="button" data-go="${x[0]}">${x[1]}</button>`).join('')}<hr><p><strong>Set up</strong></p><button type="button" data-a="p1">Part 1, accounts</button><button type="button" data-a="err">Accounts not grouped</button><button type="button" data-a="p2">Part 2, income</button><button type="button" data-a="p3">Part 3, expenses</button><button type="button" data-a="p3g">Expenses with groups</button><button type="button" data-a="p2g">Income with groups</button><button type="button" data-a="noinc">No income categories</button><hr><button type="button" data-a="bad">Show a refused file</button><button type="button" data-a="theme">Switch light and dark</button>`;
+ pv.append(d);d.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.go){S.done={pw:1,file:1,setup:1};if(b.dataset.go==='password')S.done={};if(b.dataset.go==='upload')S.done={pw:1};if(b.dataset.go==='setup')S.done={pw:1,file:1};go(b.dataset.go,{setup:1,tried:false,refused:false})}if(/^(p\d|p3g|p2g|err|noinc)$/.test(b.dataset.a||'')){const a=b.dataset.a;resetSetup();S.done={pw:1,file:1};S.noInc=a==='noinc';
+  if(a==='p3g'){A.g.exp=[{id:'n',name:'Needs'},{id:'w',name:'Wants'}];A.c.exp=CATS.exp.map(c=>c.g==='n'?'n':c.g==='w'?'w':'');U.open.exp=new Set(['']);home()}
+  if(a==='p2g'){A.g.inc=[{id:'w',name:'Work'},{id:'s',name:'From savings'}];A.c.inc=CATS.inc.map(c=>c.g==='w'?'w':c.g==='s'?'s':'');U.open.inc=new Set([''])}
+  if(a!=='p1'&&a!=='err')A.acc=ACC.map(x=>x.group==='Ungrouped'?'Money with others':x.group);home();
+  go('setup',{setup:a==='p2'||a==='p2g'?2:a==='p3'||a==='p3g'?3:a==='noinc'?2:1});if(a==='err')$('#next').click()}
+ if(b.dataset.a==='bad'){S.done={pw:1};go('upload',{refused:true})}if(b.dataset.a==='theme')toggleTheme();d.remove()}};
 const hash=location.hash.slice(1);if(ORDER.includes(hash)){S.view=hash;S.done=hash==='password'?{}:hash==='upload'?{pw:1}:hash==='setup'?{pw:1,file:1}:{pw:1,file:1,setup:1}}
 render();
 </script>

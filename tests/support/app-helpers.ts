@@ -50,7 +50,7 @@ function fill(db: Db, step: FirstTimeStep): void {
   if (db.prepare("SELECT 1 FROM import_rows LIMIT 1").get() === undefined) writeRows(db, [MADE_UP_ROW]);
   if (step === "setup") return;
   loadSetup(db);
-  db.prepare("INSERT OR IGNORE INTO setup_choices (id, reimbursement_account, trends_start_date) VALUES (1, NULL, NULL)").run();
+  db.prepare("INSERT OR IGNORE INTO setup_saved (id) VALUES (1)").run();
   if (step === "summary") return;
   confirmSummary(db);
 }

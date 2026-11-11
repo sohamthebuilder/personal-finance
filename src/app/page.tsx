@@ -1,6 +1,14 @@
 import { redirect } from "next/navigation";
 import { finishDelete } from "../lib/auth/delete-data.ts";
-import { waitSeconds } from "../lib/auth/session.ts";
+import { sessionFor, waitSeconds } from "../lib/auth/session.ts";
+import { dataState } from "../lib/data/state.ts";
+import { setupPage, summaryData } from "../lib/data/update.ts";
+import { serverToday } from "../lib/period.ts";
+import { DataNote } from "./ui/data-note.tsx";
+import { longDate } from "./ui/format.ts";
+import { FirstSetup, SummaryFlow } from "./ui/setup-first.tsx";
+import { SummaryView } from "./ui/summary-view.tsx";
+import { UploadDrop } from "./ui/upload-drop.tsx";
 import { appFiles } from "../lib/auth/start-screen.ts";
 import { CreatePasswordForm } from "./ui/create-password.tsx";
 import { Icon } from "./ui/icons.tsx";
@@ -58,27 +66,41 @@ export default async function StartPage() {
         </TaskFrame>
       );
     case "upload":
-      // Screen 4 arrives in Part 4B. There's no way past this step in 4A (condition 52).
       return (
         <TaskFrame step={1}>
           <h1>Add your export</h1>
-          <p className="task__lede">Adding your export arrives in the next part of this phase.</p>
+          <p className="task__lede">Use the Excel file from Money Manager. It&apos;s read here, and the file is never sent anywhere.</p>
+          <UploadDrop mode="first" />
         </TaskFrame>
       );
-    case "setup":
-    case "summary":
+    case "setup": {
+      // Screen 5. The step only moves on once the server has saved the answers.
+      const session = sessionFor(token, { touch: false });
+      if (session === null) redirect("/");
       return (
-        <TaskFrame step={start.screen === "setup" ? 2 : 3}>
-          <h1>{start.screen === "setup" ? "Set up" : "Confirm"}</h1>
-          <p className="task__lede">This step arrives in the next part of this phase.</p>
+        <TaskFrame step={2} wide>
+          <FirstSetup page={setupPage(session.db)} />
         </TaskFrame>
       );
+    }
+    case "summary": {
+      const session = sessionFor(token, { touch: false });
+      if (session === null) redirect("/");
+      return (
+        <SummaryFlow setup={setupPage(session.db)}>
+          <SummaryView summary={summaryData(session.db, serverToday())} />
+        </SummaryFlow>
+      );
+    }
     case "shell": {
       const data = shellData(token, "/");
       if (data === null) redirect("/");
       const { range, ...header } = data;
+      const session = sessionFor(token, { touch: false });
+      const state = session === null ? null : dataState(session.db);
       return (
         <Shell screen="overview" {...header}>
+          {state?.note && <DataNote kind={state.note} version={state.version} undoDate={state.undoDate === null ? null : longDate(state.undoDate)} />}
           <div className="card">
             <h2>Overview</h2>
             <p className="muted">{range}</p>

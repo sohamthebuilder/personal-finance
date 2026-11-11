@@ -231,3 +231,67 @@ That matches what QA saw ("59 seconds"). It's not a security hole, because it on
 - The 15-minute idle lock was tested only with a fake clock, not waited out in real time.
 - Copy on the wipe panel: the built-in browser blocks the clipboard, so "Copied" hasn't been seen.
 - The Back check was in Brave, not Google Chrome. Both use Chromium's page cache, so I accept it for condition 51.
+
+## Sign-off, Part 4B (Security, 2026-11-11)
+
+### Decision
+
+**Signed off.** No Blocker or Major. Conditions 54 to 58 are met with tests, S4-14 and S4-15 are fixed, and the full route list passes the default-deny gate. Two new Minors (S4-16, S4-17) go in the handoff; neither blocks merge.
+
+Checks I ran myself (made-up HOME in my scratch folder): `npm test` 478 tests. On the first run 472 passed and the 6 `server.test.ts` tests failed with `ECONNREFUSED 127.0.0.1:3117`, because QA's test run was using the same fixed port and `.next` folder at the same moment. Run again on its own after QA's run ended, `server.test.ts` passed 21 of 21, so all 478 pass. `npm audit`: 0 vulnerabilities. `npm run guard`: 248 files, nothing blocked. I also ran the group-name checks directly from a scratch script (S4-16, S4-17).
+
+### Conditions 54 to 58
+
+| # | Result | Evidence |
+|---|---|---|
+| 54 | Met | `readFileBody` takes `application/octet-stream` only, checks the declared length before reading and counts bytes again. The gate gives only `/api/upload` and `/api/update/upload` 20 MiB. Tests in `upload-update.test.ts`: over-size refused at the gate and in the route, memory and time limits give fixed text, a second upload is refused, no new file in the temp or data folder, bytes transferred to the worker, worker started with `env: {}` and the set limits. `server.test.ts` sends 20 MiB + 1 (413) |
+| 55 | Met | Undo copy is `undo_*` tables in the same encrypted database and transaction. "keeps the undo copy encrypted…" scans the raw database and side files (UTF-8 and UTF-16) for a marker name; a source test fails on `serialize(`, `VACUUM INTO`, `ATTACH`, `.backup(`. Group names are covered too: `setup.test.ts` "answers and group names are unreadable on disk, including the journal mid-save". `setup_groups`, `setup_categories` and `setup_saved` are in `SETUP_TABLES`, so the undo copy keeps them in the same encrypted file |
+| 56 | Met | Tick, "most accounts missing" on the server, Start over refused after confirm, stale version on summary, Start over, replace, undo and a second window's review (`upload-update.test.ts`, repeated over HTTP in `server.test.ts`). Setup save: `saveSetupAnswers` checks the version before and again inside the `BEGIN IMMEDIATE` write; `setup.test.ts` "refuses a save whose data version is stale"; `server.test.ts` gives 409 over HTTP |
+| 57 | Met | Condition 36: removed names leave the live tables, kept only in the undo copy (now including category places). 23: amounts limit on replace and first import. 24 and 25: every route but the open ones calls the session check inside one error boundary (`upload-update.test.ts` walks every `route.ts`). 26: server `today`. 27: names with HTML, a 4,000-character string and direction-changing characters show as escaped text; an HTML-looking group name shows escaped in Settings. No `dangerouslySetInnerHTML` or `innerHTML` in `src/app` |
+| 58 | Met | See route list below |
+
+### Setup save route (`POST /api/setup`)
+
+- **Session, size, boundary:** `withSessionForm` (live session, 16 KiB counted while reading, one `try`/`catch` that never logs or sends the error). The gate's 16 KiB limit and default-deny cover it. `server.test.ts`: 17 KiB gives 413, no session gives 401.
+- **Stale version:** checked before and inside the write transaction. 409.
+- **Server-side limits:** shape checked as untrusted (arrays, lengths equal to the server's own lists, strings only, safe integers), account groups from the fixed list only, every account grouped the first time, up to 12 groups per list, empty, over 40 visible characters, "Not grouped", repeats (ignoring case, ends, NFC and invisible characters), line breaks, control and direction-changing characters, category places in range. Same function on page and server. Refusals are fixed codes and fixed text.
+- **Positions, not names:** the page sends a group name per account position and a group index per category position. Account and category names from the file never travel back; the server writes them from its own `findSetupOptions` list. `__proto__` and `constructor` names are plain data (tested).
+- **NFC and bidi:** names are NFC-normalised and trimmed before the checks and saved that way. U+061C, U+200E/F, U+202A to U+202E and U+2066 to U+2069 are refused as `NOT_PLAIN`. Refusing rather than stripping is the right call: what's saved never differs from what was sent.
+- **Encrypted storage:** group names sit in `setup_groups` in the one SQLCipher database, and in its undo copy, never in a side file, log or the web address. Tested on disk including the journal mid-save.
+
+### S4-14 and S4-15
+
+- **S4-14: fixed.** `beginPasswordCheck` still counts the try before hashing, but sets `waitUntil` only in `finish(false)`. A try while another check runs gets the fixed 2-second `BUSY_WAIT_SECONDS`, not the next wait. `waitSeconds()` during a correct check reads 0. The log in form has a `sending` ref, and `postForm` never throws, so the ref can't stick. Tests: `auth-session.test.ts` "gives a correct log in after a wait no second wait…", "still starts the wait when the try turns out wrong", "guards the log in form with a ref…".
+- **S4-15: fixed.** `forgot-panel.tsx` line 42 reads exactly "Then, in that same Terminal window, paste this and press Return. It lists what it will delete and asks you to type DELETE."
+
+### Route list (condition 58)
+
+I listed every file under `src/app`. Routes are the 17 `route.ts` files and 4 `page.tsx` files; everything else is `ui/`, CSS or `layout.tsx`, which Next.js doesn't serve as a route. `public/` holds only the font and `OFL.txt`.
+
+- **Gate (`gate.ts`, unchanged in logic from 4A):** without a session only `GET`/`HEAD /`, the exact font path, `/_next/static/…`, and `POST` to `/api/password/create`, `/api/login`, `/api/delete/finish` pass. Pages get 303 to `/`, everything else 401. `gate.test.ts` finds every page and route from the files, so `/api/setup` is covered with no list to update.
+- **Each route's own check:** `password/create`, `login`, `delete/finish` are open by design (with their own `try`). `status` calls `requireSession(…, { touch: false })`. `delete`, `logout`, `period`, `upload`, `update/upload` call `requireSession` inside their own `try`. `note/dismiss`, `setup`, `start-over`, `summary/confirm`, `undo`, `update/cancel`, `update/confirm`, `update/rows` use `withSessionForm`. Pages: `/` chooses the screen on the server and re-checks the session for setup, summary and shell; `/upload`, `/settings`, `/settings/delete` call `requireShell`.
+- The list matches the handoff's "Full route list" exactly. No route is missing a check.
+
+### New findings
+
+| ID | Level | Finding | When |
+|---|---|---|---|
+| S4-16 | Minor | A group name with a lone surrogate passes the checks. A browser text field can't produce one, but a hand-made request can send `"Bills\ud800"` as JSON; `groupNameProblem` returns null, and SQLite stores it as U+FFFD, so the saved name differs from what was sent. **Reproduce:** scratch call `groupNameProblem(JSON.parse('"Bills\\ud800"'), [])` gives null. **Fix:** refuse `!name.isWellFormed()` as `NOT_PLAIN` in `group-names.ts`, with a test | Later (Phase 5 or next touch of `group-names.ts`) |
+| S4-17 | Minor | The 40-character limit counts graphemes, so one "character" can carry thousands of combining marks (a 3,001-code-unit name counted as 1), and invisible "default ignorable" characters (zero-width, tag characters) are kept inside a name that also has letters. Only the owner can save a name, the 16 KiB form caps it, and it shows as escaped text, so the risk is a messy display, not data exposure. **Fix:** also cap code units (for example 160), and strip or refuse default-ignorable characters inside a name, as with bidi | Later, with S4-16 |
+
+Not a finding: `/api/status` has no `try`, but it only calls `sessionFor`, which doesn't throw; unchanged since 4A.
+
+### Not verified
+
+- I didn't run the app or a browser. Screens 5, 8 and 13 by eye are QA's.
+- The production-server tests passed only when run on their own, because QA was using the same fixed port (3117) and build folder at the same time. Running two test runs at once in one worktree will always collide; it's a test set-up limit, not an app fault.
+- Worker memory limits were checked with the tests' forced cases, not with a 200 MB made-up file.
+- The 15-minute idle lock is still only tested with a fake clock.
+
+### Re-check, S4-16 and S4-17 (Security, 2026-11-11)
+
+Checked `src/lib/setup/group-names.ts`, the server path (`/api/setup` → `update.ts` → `findSetupProblem` → `groupsProblem` → `groupNameProblem`, inside the write), and probed the checks from a scratch script. `node --test tests/setup-groups.test.ts`: 13 of 13 pass. `npm run guard`: 248 files, nothing blocked.
+
+- **S4-16: Fixed.** `"Bills\ud800"` sent as JSON is now refused as `NOT_PLAIN` (`isWellFormed` check runs first on the server).
+- **S4-17: Fixed.** One letter with 3,000 combining marks is refused as `TOO_LONG` (6 marks and 32 code units per character). Zero-width space, and a zero-width joiner, variation selector or tag character inside a plain Latin name ("Bi‍lls", "Bi️lls", "Bills" + tag characters) are all refused as `NOT_PLAIN`. A Bengali conjunct and a skin-tone family emoji still pass.
+- **New, S4-18 (Info).** The joiner exception can still carry invisible characters when they follow an emoji or a letter from a non-Latin script: "Bills 中" + 15 tag characters, or "Bills" + 30 × "中" + three zero-width joiners, pass. Each is capped at 32 code units per character and needs a visible emoji or non-Latin letter, so a plain Latin name can't hide them; only the owner can save a name and it shows as escaped text. **Fix (optional, later):** allow tag characters only after U+1F3F4 (flag), and joiners only between two emoji or inside a script that uses them. No action needed for merge.

@@ -30,17 +30,20 @@ export function IconSprite() {
       <symbol id="i-fold" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15M16 9.5L13.5 12l2.5 2.5"/></symbol>
       <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.500 8.500V6.500a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2"/></symbol>
       <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.500 7h15M10 7V5h4v2M6.500 7l1 12a2 2 0 0 0 2 1.800h5a2 2 0 0 0 2-1.800l1-12M10.500 11v6M13.500 11v6"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
       </defs>
     </svg>
   );
 }
 
 export type IconName =
-  | "check" | "eye" | "eye-off" | "chev" | "alert" | "lock" | "file" | "upload" | "gear" | "out" | "more" | "home" | "bars" | "trend" | "bank" | "card" | "wallet" | "people" | "case" | "q" | "spark" | "fold" | "copy" | "trash";
+  | "check" | "eye" | "eye-off" | "chev" | "alert" | "lock" | "file" | "upload" | "gear" | "out" | "more" | "home" | "bars" | "trend" | "bank" | "card" | "wallet" | "people" | "case" | "q" | "spark" | "fold" | "copy" | "trash" | "search" | "x" | "plus";
 
-export function Icon({ name }: { name: IconName }) {
+export function Icon({ name, className }: { name: IconName; className?: string }) {
   return (
-    <svg className="i" aria-hidden="true">
+    <svg className={className ? `i ${className}` : "i"} aria-hidden="true">
       <use href={`#i-${name}`} />
     </svg>
   );

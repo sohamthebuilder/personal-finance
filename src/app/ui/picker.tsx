@@ -19,6 +19,7 @@ export function Picker(props: {
   invalid?: boolean;
   describedBy?: string;
   id?: string;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -65,6 +66,7 @@ export function Picker(props: {
         aria-label={props.label}
         aria-invalid={props.invalid ? true : undefined}
         aria-describedby={props.describedBy}
+        disabled={props.disabled}
         onClick={() => setOpen(!open)}
         onKeyDown={(event) => {
           if ((event.key === "ArrowDown" || event.key === "ArrowUp") && !open) {

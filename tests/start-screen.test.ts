@@ -113,16 +113,26 @@ describe("no shortcut in 4A (condition 52)", () => {
       "delete/route.ts",
       "login/route.ts",
       "logout/route.ts",
+      "note/dismiss/route.ts",
       "password/create/route.ts",
       "period/route.ts",
+      "setup/route.ts",
+      "start-over/route.ts",
       "status/route.ts",
+      "summary/confirm/route.ts",
+      "undo/route.ts",
+      "update/cancel/route.ts",
+      "update/confirm/route.ts",
+      "update/rows/route.ts",
+      "update/upload/route.ts",
+      "upload/route.ts",
     ]);
     for (const file of readdirSync("src", { recursive: true }).map(String)) {
       if (!/\.(ts|tsx)$/.test(file)) continue;
       const text = readFileSync(join("src", file), "utf8");
       assert.doesNotMatch(text, /process\.env\.(?!HOME\b|APP_PORT\b|NODE_ENV\b)/, `${file} reads an unexpected setting`);
       assert.doesNotMatch(text, /searchParams|useSearchParams/, `${file} reads the web address`);
-      if (!file.startsWith("lib/setup/progress.ts")) assert.doesNotMatch(text, /confirmSummary/, `${file} confirms the summary`);
+      if (!file.startsWith("lib/setup/progress.ts") && file !== "lib/data/update.ts") assert.doesNotMatch(text, /confirmSummary/, `${file} confirms the summary`);
     }
   });
 });

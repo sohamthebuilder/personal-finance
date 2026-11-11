@@ -43,6 +43,37 @@ export async function readForm(request: Request): Promise<URLSearchParams | null
   return new URLSearchParams(text);
 }
 
+/**
+ * Reads an uploaded file as the raw body (Decision 10): no form parser touches
+ * it. The size limit applies to the declared length before a byte is read, and
+ * again as bytes arrive. Null for anything else. The bytes sit in a buffer of
+ * their own, so they can be handed to the reader's worker.
+ */
+export async function readFileBody(request: Request): Promise<Uint8Array | "TOO_LARGE" | null> {
+  const type = request.headers.get("content-type") ?? "";
+  if (!/^application\/octet-stream$/i.test(type)) return null;
+  const limit = bodyLimit(new URL(request.url).pathname);
+  const declared = request.headers.get("content-length");
+  if (declared === null || !/^\d{1,9}$/.test(declared)) return null;
+  if (Number(declared) > limit) return "TOO_LARGE";
+  const bytes = new Uint8Array(Number(declared));
+  if (!request.body) return bytes;
+
+  const reader = request.body.getReader();
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (total + value.byteLength > bytes.byteLength) {
+      await reader.cancel();
+      return total + value.byteLength > limit ? "TOO_LARGE" : null;
+    }
+    bytes.set(value, total);
+    total += value.byteLength;
+  }
+  return total === bytes.byteLength ? bytes : null;
+}
+
 /** One value of a field, or "" if it's missing or repeated. */
 export function field(form: URLSearchParams, name: string): string {
   const values = form.getAll(name);
@@ -66,3 +97,22 @@ export function backToStart(headers: Record<string, string> = {}): Response {
 
 /** Sent with every lock and log out, so Back can't bring a page from the cache (S4-10). */
 export const CLEAR_CACHE = { "Clear-Site-Data": '"cache"' };
+
+/**
+ * The frame every small change route shares: a live session, a small form
+ * body, and one error boundary. A caught error is never logged or sent.
+ */
+export async function withSessionForm(
+  request: Request,
+  handle: (session: Unlocked, form: URLSearchParams) => Response | Promise<Response>,
+): Promise<Response> {
+  try {
+    const session = requireSession(request);
+    if (session === null) return reply({ ok: false, error: "LOCKED" }, 401);
+    const form = await readForm(request);
+    if (form === null) return reply({ ok: false, error: "BAD_REQUEST" }, 400);
+    return await handle(session, form);
+  } catch {
+    return reply({ ok: false, error: "FAILED" }, 500);
+  }
+}

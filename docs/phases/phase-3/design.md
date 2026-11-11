@@ -94,7 +94,7 @@ Shown only when there's no database, no salt file and no marker. See "What opens
 | Error, slowed down | On the field: "Too many tries. Try again in 30 seconds." The seconds count down and the button stays off until zero |
 | Error, files incomplete | Note, with no password field: "Some of the app's files are missing, so it can't open. Nothing was changed." Then the forgotten-password steps |
 | Error, can't open | Note: "The app couldn't check your password. Nothing was changed. Quit the app and try again." |
-| Forgotten password | Opens in place: "There's no reset, because a reset would be a way in for anyone else. To start again, stop the app by pressing Control-C in its Terminal window. Then paste this into Terminal and press Return. It lists what it will delete and asks you to type DELETE. It deletes everything in the app, including setup answers, the undo copy and AI keys. Export files on your Mac aren't touched. It downloads nothing and never asks for your Mac password. Only use this command from this screen." Then the command, Copy, and "Then run the app again and create a new password." |
+| Forgotten password | Opens in place: "There's no reset, because a reset would be a way in for anyone else. To start again, stop the app by pressing Control-C in its Terminal window. Then, in that same Terminal window, paste this and press Return. It lists what it will delete and asks you to type DELETE. It deletes everything in the app, including setup answers, the undo copy and AI keys. Export files on your Mac aren't touched. It downloads nothing and never asks for your Mac password. Only use this command from this screen." Then the command, Copy, and "Then run the app again and create a new password." |
 | Copy, done | The button reads "Copied" for 2 seconds |
 | Copy, failed | "Couldn't copy. Select the command and copy it yourself." The command must stay selectable |
 | Stale | Can't happen: nothing shows before login |
@@ -141,28 +141,55 @@ States match screen 2, and the field follows the same Fields rule: spell check a
 
 ## Screen 5: Setup
 
-Three short parts with a "Part 1 of 3" label. Back keeps the answers. Names come from the file, and generic keyword suggestions fill in what they can.
+*Changed 2026-11-10 for the owner's setup change, and again the same day for the second change, income groups (brief sections "Requirement change, setup answers" and "Second change, income groups"). Lines marked **(new)** are new wording waiting for the owner's yes.*
 
-**Part 1: "Group your accounts".** One row per account: a group icon, its name and balance, and a picker with Bank, Cards, Wallets, Investments, Money with others and Business. A suggested answer has a "Suggested" tag, which goes once the owner changes it. A count and progress line read "5 of 7 grouped".
+Three parts with a "Part 1 of 3" label: Accounts, Income and Expenses. Back keeps the answers. Names come from the file, and generic keyword suggestions fill in what they can for accounts only. Income and expenses start with no groups, and there's no Earned, Returns or Loan choice anywhere. There's no reimbursement or "reliable from" question any more. Balances aren't shown: the summary and dashboards show them.
 
-**Part 2: "Sort your income".** One row per income category, with a three-way segmented choice: Earned, Returns, Loan. Earned is chosen to start with, and suggestions may set the others. One choice per row means a category can never be both. The blank category reads "No category".
+All three parts use the same long-list parts from the design system: groups that open and close (`.fold`), a search field (`.search`), and rows (`.pick-row`). It must stay quick with 60 or more accounts and 40 income and 40 expense categories with subcategories (AC-27).
 
-**Part 3: "Two last details".** Two questions:
-- "Which account tracks money you're paid back?" A picker of accounts, plus "I don't have one".
-- "When does your history become reliable?" Month and year pickers, starting at the file's first month. It's saved as the 1st of that month. Hint: "Spending trends start here. Net worth always uses your full history."
+**Part 1: "Group your accounts".** Lede: "We found these in your file and suggested what we could."
+- Search field: "Find an account" **(new)**.
+- Groups in this order, each a closed row with its icon, name and count ("8 accounts", "1 account", "No accounts"): **"Needs a group"** **(new)**, open, holding every account with no suggestion; then Bank, Cards, Wallets, Investments, Money with others and Business, closed.
+- Opening a group lists its accounts. Each row has the name, a "Suggested" tag if the answer came from a suggestion (it goes once the owner changes it), and a group picker. The picker lists Bank, Cards, Wallets, Investments, Money with others and Business. An empty picker reads "Choose a group".
+- **Rows don't jump.** After a picker changes, the row stays where it is, so nothing moves under the pointer. In a named group it shows a tag, "Moved to Cards" **(new)**. Counts update at once. Rows settle into their new group when any group opens or closes, the search changes, or the part is shown again.
+- Under the groups: the count and progress line, "52 of 60 grouped".
 
-Button: "Save and continue". **Leads to:** screen 6.
+**Part 2: "Group your income"** **(new)**. Lede: "Make groups such as Work and Savings, and put each category in one. You can do this later in Settings." **(new)**
+- It works exactly like part 3, with its own list of groups: search "Find a category", "Not grouped" first (closed until the first group exists), the owner's groups with Options, category rows with their subcategories under the name and a group picker once a group exists, and "Add a group".
+- The Add hint reads "Up to 12 groups, such as Work and Savings." **(new)** until there's a group, then "4 of 12 groups."
+- No suggestions. This part is optional: "Continue" works with every category still Not grouped. All income counts as Earned whatever its group.
+- Income groups and expense groups are separate lists, so "Family" can be used once in each.
+
+**Part 3: "Group your expenses"** **(new)**. Lede: "Make groups such as Needs and Wants, and put each category in one. You can do this later in Settings." **(new)**
+- Search field: "Find a category".
+- **"Not grouped"** comes first and holds every category to start with. It's closed while there are no groups, and opens by itself when the first group is added, because then there's something to do in it.
+- Under the groups: "Add a group" **(new)** with the hint "Up to 12 groups, such as Needs and Wants." **(new)**, or "4 of 12 groups." **(new)** once there are some.
+- Add, rename and remove work as on screen 13, with the same checks and wording. Removing a group here says "Its 9 categories go back to Not grouped." without "Nothing changes until you save."
+- Each category row shows its name, its subcategories as a line under it ("Vegetables · Staples · Dairy · Snacks"), and once there's at least one group, a picker with "Not grouped" and the owner's groups. Subcategories always follow their category, so they have no picker.
+- This part is optional. "Save and continue" works with every category still Not grouped.
+
+Buttons: "Continue" and "Back" (from part 2), then "Save and continue" on the last part. **Leads to:** screen 6.
 
 | State | What shows |
 |---|---|
-| Loading | Step 1 skeleton: rows at their real height, then "Saving…" on the button |
+| Loading | Step 1 skeleton: group rows at their real height, then "Saving…" on the button |
 | Empty | Can't happen: a file with no rows is refused |
-| Error, account not grouped | On each empty row: "Choose a group." Continue moves focus to the first one. The error clears when it's fixed |
+| Error, account not grouped | On each empty row: "Choose a group." Continue opens "Needs a group" if it was closed, clears the search if it hid the row, and moves focus to the first empty picker. The error clears when it's fixed |
+| Error, group name | On the name field: "Give the group a name.", "Use 40 characters or fewer.", "You already have a group called “Wants”." or "“Not grouped” is kept for categories without a group." **(all new)** |
+| Group limit reached | The Add button goes, and the hint reads "You have 12 groups, the most you can have. Remove one to add another." **(new)** |
+| Search, no match | In place of the list: "Nothing matches “yacht”." with a "Clear search" link **(new)**. While searching, a count reads "1 match" or "15 matches" **(new)** |
 | Error, save failed | Note with the fixed text: "Setup couldn't be saved. Nothing was changed." Other setup refusals can't normally be reached from this screen, so they show the same note |
-| No income categories | Part 2 is skipped, and the label reads "Part 2 of 2" |
+| No income categories | Part 2 is skipped, and the labels read "Part 1 of 2" and "Part 2 of 2" |
+| No expense categories | Part 3 is skipped, the same way |
 | Stale | Can't happen: answers are about the file just added |
 
-**Widths:** at 1280, the name is on the left and the control on the right. At 375 and 320, the control sits under the name at full width. **Keyboard:** pickers open with Enter, and arrow keys move through them. The three choices are a radio group, moved with the arrow keys.
+**Search rules.** Matching ignores case and looks anywhere in the name. Accounts match on the account name, or on the group name, which shows the whole group. Income and expenses match on the category or any subcategory, or on the group name, which shows the whole group. Every group with a match opens while searching. Clearing the search puts back the groups the owner had open. Search never changes an answer.
+
+**Widths.** The content column is the wide task column (640px). At 1280, the name is on the left and the control on the right (280px). At 560 and below, the control sits under the name at full width, and the rows inside a group step in by 16px instead of 48px (24px for groups without an icon). No sideways scroll at 1280, 375 or 320.
+
+**Keyboard.** Search, Clear (only once there's text), then each group row in order; inside an open group, its rows' pickers or choices in order. A group row is a button: Enter or Space opens and closes it, and it says whether it's open (`aria-expanded`). Pickers open with Enter, arrow keys move, Enter picks and Esc closes. In the search field, Esc clears it. In a group name field, Enter saves and Esc cancels. Parts 2 and 3: search, Not grouped, each group row and its Options button, then Add a group, then the buttons.
+
+**Motion.** Group opens: 200ms, the rows fade in and drop 6px, and the chevron turns. Group closes: at once, chevron turns. Search narrows the list at once, with no movement. Errors fade in 140ms. Step change between parts: 180ms in the direction of travel. Reduced motion: all instant.
 
 ## Screen 6: Summary
 
@@ -203,6 +230,8 @@ Title: "Does this look right?"
 **Compared with.** Spending compares with the same number of days just before the period. This month on the 7th compares with 1 to 7 Oct. Financial year compares with the same dates a year earlier. All has nothing before it, so no comparison shows. A period with no earlier rows reads "Nothing earlier to compare".
 
 **Blank names (AC-11).** A blank category reads "No category", and a blank subcategory reads "No subcategory". The labels are the app's own. They're shown in the same plain style as real names and can't be picked up as file text.
+
+**What Earned means (second change, 2026-11-10).** Earned is all income rows, except balance corrections, whatever group the owner put them in. The tile keeps the name "Earned". Accepted gap: a loan or investment gain logged as income counts in Earned and raises the savings rate.
 
 **Savings rate (AC-11, F-2).** The rate shows only when Earned is above zero.
 
@@ -263,7 +292,8 @@ Reached with Upload. Title: "Update your data". Uses the Shell layout, so the ow
 - **Counts:** New rows, Changed rows and Removed rows, in one `.card.stats` with the file's total: "8,469 rows from 1 Apr 2021 to 28 Nov 2026".
 - **Rows:** a three-way choice for New, Changed and Removed, each showing date, account, category and amount as plain text. Changed rows show the new amount, with "was ₹1,200.00" under it. The first 10 show, then "Show 50 more", or the smaller number left.
 - **New accounts, only if any:** title "New accounts", line "These go in Ungrouped until you choose a group." One row each with a group picker that starts on Ungrouped. The owner can choose now or later.
-- **New income categories, only if any:** title "New income categories", line "These count as Earned unless you change them." One row each with the Earned, Returns and Loan choice. This is added because a new returns category would otherwise raise Earned without anyone noticing.
+- **New income categories, only if any** *(changed again 2026-11-10, second change)*: title "New income categories", line "These show as Not grouped. You can put them in a group in Settings." Same rows as new expense categories below: the name with a "Not grouped" tag, and its subcategories under it. Nothing to choose here.
+- **New expense categories, only if any** *(new 2026-11-10)*: title "New expense categories" **(new)**, line "These show as Not grouped. You can put them in a group in Settings." **(new)** One row each: the name with a "Not grouped" tag, and its subcategories under it. No picker here, so the review stays short.
 - **Removed names, only if any:** "1 account and 2 categories are no longer in this file. Their setup answers go when you confirm, and Undo brings them back." Phase 4 follows condition 36.
 - **Buttons:** "Replace my data" (main) and "Cancel". Under them: "Your current data is kept, encrypted, so you can undo this until your next update."
 
@@ -306,7 +336,7 @@ Below it, a tick box: "I've checked, and I want to use this file." Replace my da
 
 **Saving and locking.** Saving counts as use. If a logout from another window arrives during a save, the save finishes or rolls back before the database closes.
 
-**Widths.** 1280: lead panel beside the counts. 375 and 320: stacked, the row date sits above the name, and the amount stays right-aligned. New-account pickers go full width under the name. Buttons go full width. **Keyboard.** Stage 1: Choose file, Cancel. Stage 2: row choice, rows, Show 50 more, new-account pickers, income choices, tick box if shown, Replace my data, Cancel. The note's Undo comes before Dismiss. The dialog traps focus and starts on the safe button, "Keep this update".
+**Widths.** 1280: lead panel beside the counts. 375 and 320: stacked, the row date sits above the name, and the amount stays right-aligned. New-account pickers go full width under the name. Buttons go full width. **Keyboard.** Stage 1: Choose file, Cancel. Stage 2: row choice, rows, Show 50 more, new-account pickers, tick box if shown, Replace my data, Cancel. The note's Undo comes before Dismiss. The dialog traps focus and starts on the safe button, "Keep this update".
 
 **Motion.** Stage change: step change 180ms. List change: the choice slides 240ms and rows swap at once. After confirm or undo: numbers roll 500ms and bars move 400ms, which is how the owner sees what changed. Reduced motion: instant, and the note still says what happened.
 
@@ -339,7 +369,7 @@ Below it, a tick box: "I've checked, and I want to use this file." Replace my da
 - **Level 2, subcategories:** the same bars for one category, plus "Monthly trend": bars of Spent by month for that category.
 - **Level 3, transactions:** rows with date, account, amount with paise and note. Newest first, 50 at a time, with "Show 50 more". Totals sit on top.
 - **Controls:** a click on a bar row goes down a level. A path at the top, "Spending / Groceries / Vegetables", goes back up. The browser's Back does the same. Changing the period keeps the level, and if the category has nothing in the new period, the level's empty state shows.
-- **Trends start** at the "reliable from" date from setup. Earlier months don't show. Line under the chart: "Trends start from Apr 2021. You can change this in Settings."
+- **Trends start** at the first month in the file (setup change, 2026-11-10: there is no "reliable from" answer any more).
 - **Labels:** every amount here is Spent, meaning `Exp.` rows as logged. Blank names use the shared labels.
 
 | State | What shows |
@@ -357,13 +387,12 @@ Below it, a tick box: "I've checked, and I want to use this file." Replace my da
 ## Screen 11: Savings & Net worth
 
 - **On it:** hero with Net worth and the change in the period. "Net worth over time", a line for the full history with the period marked by a soft band. "Savings rate by month", bars above and below a zero line. "What changed your net worth", the breakdown.
-- **Breakdown lines, in this order:** Net worth on [start date], Earned, Spent (shown with a minus), Investment returns, Recovered, Other corrections, Loans, Unmatched transfers, then Net worth on [end date] and Change in net worth. Every line always shows, even at ₹0.
+- **Breakdown lines, in this order:** Net worth on [start date], Earned, Spent (shown with a minus), Other corrections, Unmatched transfers, then Net worth on [end date] and Change in net worth. Every line always shows, even at ₹0.
 - **Help lines, on a small help button per line:**
-  - Investment returns: "Market gains and losses, interest and dividends."
-  - Recovered: "Money paid back on your reimbursement account. It doesn't change Saved."
-  - Other corrections: "Balance corrections on other accounts."
-  - Loans: "Money received from or paid back on loans."
+  - Earned: "All your income, whatever group it's in." **(new)**
+  - Other corrections: "Balance corrections on your accounts."
   - Unmatched transfers: "Transfers with no partner in the file, which changes your balances. It's normally ₹0."
+- **Gone in the second change (2026-11-10):** the Investment returns and Loans lines. That money now counts in Earned, and the list still adds up to the change in net worth.
 - **Not in the list:** Invested, because it moves money between your own accounts. Line under the list: "Invested isn't here because that money stays yours."
 - **Hover or focus** on the line or bars shows exact figures in the tooltip. No click action.
 
@@ -386,7 +415,7 @@ Below it, a tick box: "I've checked, and I want to use this file." Replace my da
 - **Accounts:** Total net worth leads. Then one section per group in setup order: icon, name, total, and rows with account name, balance and "Updated 12 Oct 2026", the date of its latest row. Cards show as negative. Balances are always today's, and the period doesn't change them. A line at the top says so: "Balances are as of today."
 - **Old balances:** the row gets a `.tag` reading "Old balance", with a warn icon, so colour isn't the only signal. How old is set in Phase 8.
 - **Ungrouped:** this section shows only when it has accounts, at the top: "2 accounts aren't grouped yet." with a Settings link. They still count in net worth.
-- **Investments:** one card with Value, Net put in and Returns, then one allocation bar by account with a text list of each account, amount and share. Net put in and Returns follow the period. Value is today's.
+- **Investments:** one card with Value, Net put in and Returns, then one allocation bar by account with a text list of each account, amount and share. Net put in and Returns follow the period. Value is today's. Returns here are worked out from balances and money put in, never from income groups.
 - **Controls:** a Settings link in Ungrouped. Rows have no other action.
 
 | State | What shows |
@@ -401,24 +430,55 @@ Below it, a tick box: "I've checked, and I want to use this file." Replace my da
 
 ## Screen 13: Settings, account and category setup
 
+*Changed 2026-11-10 for the owner's setup change, and again for the second change, income groups. Lines marked **(new)** are new wording waiting for the owner's yes.*
+
 Settings has one page with a three-way choice at the top: Setup, Your data and AI. Title: "Settings".
 
-**Setup.** The same controls as screen 5, grouped in one card each: accounts with group pickers, income categories with Earned, Returns and Loan, reimbursement account, and reliable-from month and year. Ungrouped accounts come first. Button: "Save changes", with "Discard" beside it, shown only after a change.
+**Setup.** Three cards, each with the same controls as screen 5, then a save bar. The "Paid back and history" card is gone.
 
-**Your data.** Last upload date and rows, "Undo last update" (the dialog from screen 8) and the Delete my data row, which opens screen 14.
+- **Accounts.** Line: "The group decides where each account shows and what counts towards net worth." Search "Find an account". Groups in this order: **Ungrouped** first and open, then Bank, Cards, Wallets, Investments, Money with others and Business, closed, each with its icon and count. Ungrouped always shows, even with "No accounts", so the owner can see where an account would go. Opening a group lists its accounts, each with a group picker that includes Ungrouped (an allowed answer here). No balances. A moved row shows "Moved to Cards" and settles as on screen 5. An empty group reads "Nothing in this group yet." **(new)**
+- **Income.** Line: "Make your own groups, such as Work and Savings, and put each category in one. Subcategories go with their category." **(new)** Exactly like Expenses below, with its own groups: search "Find a category", "Not grouped" first and open, the owner's groups with Options, category rows with pickers, then "Add a group". No Earned, Returns or Loan choice. No income categories hides this card.
+- **Expenses.** Title "Expenses" **(new)**. Line: "Make your own groups, such as Needs and Wants, and put each category in one. Subcategories go with their category." **(new)** Search "Find a category". **"Not grouped"** first and open, then the owner's groups in the order they were made, each with its count ("9 categories") and an Options button (`more` icon, label "Options for Wants") **(new)** that opens a menu: "Rename" and "Remove" **(new)**. Each category row: name, subcategories under it, and a picker with "Not grouped" and the groups. Under the groups: "Add a group" and "4 of 12 groups.", or the limit line.
 
-- **After saving:** `.note--ok`: "Saved. Every screen now uses these answers." It's one change, so numbers on every screen update at once.
+Everything below about groups applies to Income and Expenses alike. Each has its own 12-group limit, and the duplicate check looks only within the same list.
+
+**Adding and renaming a group.** The Add button, or the group's row for Rename, turns into a name field in place (`.inline-edit`): label "New group name" or "Group name" **(new)**, the field, then "Add group" or "Rename" **(new)**, and "Cancel". Hint under it: "Up to 40 characters." **(new)** Enter saves and Esc cancels. Checks run on Add or Rename and then again as the owner types, and the error replaces the hint:
+- Empty, or only spaces: "Give the group a name." **(new)**
+- Over 40 characters, counted as characters people see: "Use 40 characters or fewer." **(new)**
+- Same as another group, ignoring case and spaces at the ends: "You already have a group called “Wants”." **(new)**, naming the group as it was saved.
+- "Not grouped": "“Not grouped” is kept for categories without a group." **(new)**
+- The 13th group can't be started: the Add button goes and the hint reads "You have 12 groups, the most you can have. Remove one to add another." **(new)**
+The field has no character limit of its own, so a pasted long name shows the error rather than being cut silently. The server checks all of these again (AC-28). Names show as plain text only. After Add or Rename, focus goes to that group's row. A new group starts empty and closed.
+
+**Removing a group.** From the menu, "Remove". If the group has categories, a dialog: title "Remove “Wants”?" **(new)**, text "Its 9 categories go back to Not grouped. Nothing changes until you save." **(new)**, buttons "Keep group" **(new)** and "Remove group" (danger) **(new)**. Focus starts on "Keep group". An empty group is removed straight away, with no dialog, because nothing is lost. After removing, its categories show under Not grouped, and focus goes to the Not grouped row.
+
+**Save bar** (`.savebar`, new in the design system). At the end of the Setup tab. It holds "Save changes" (the one primary button) and "Discard". Its line reads:
+- No changes: "No unsaved changes." **(new)** Save is off, Discard is hidden, and the bar sits at the end of the page.
+- After a change: "You have unsaved changes." **(new)** Save on, Discard shows, and the bar sticks to the bottom of the window (above the tab bar on narrow windows), so Save is always in reach on a long page.
+- Saving: "Saving…" on the button, every control off, Discard hidden.
+- Saved: a tick and "Saved. Every screen now uses these answers." (the existing line, moved here from the top note so the owner sees it where they pressed Save). Focus moves to this line. Rows settle into their groups.
+- Couldn't save: an alert icon and "Setup couldn't be saved. Nothing was changed." (existing), and the button reads "Try again" **(new label)**.
+
+**Your data.** Last upload date and rows, "Undo last update" (the dialog from screen 8) and the Delete my data row, which opens screen 14. No change.
+
 - **Leaving with changes:** a dialog: "Leave without saving? Your changes will be lost." Buttons: "Keep editing" and "Leave".
 
 | State | What shows |
 |---|---|
-| Loading | Skeleton rows, then "Saving…" on the button |
-| Empty | Can't happen: settings only opens with data. No income categories hides that card |
-| Error, save failed | "Setup couldn't be saved. Nothing was changed." with Try again |
+| Loading | Skeleton group rows at their real height, then "Saving…" on the button |
+| Empty | Can't happen: settings only opens with data. No income categories hides that card. No expense categories shows the Expenses card with "Nothing in this group yet." under Not grouped |
+| Error, save failed | In the save bar: "Setup couldn't be saved. Nothing was changed." with "Try again" |
+| Error, group name | On the name field, as above |
+| Group limit reached | As above |
+| Search, no match | "Nothing matches “yacht”." with "Clear search", in place of that card's list |
 | Error, account left without a group | Can't happen here: Ungrouped is an allowed answer |
-| Stale | If data changed in another window: the shared note, and Save is off until Reload |
+| Stale | If data changed in another window: the shared note at the top with Reload, and every control is off until Reload. Search and opening groups still work |
 
-**Widths.** 1280: name left, control right. 375 and 320: control under the name, full width. **Keyboard.** Choice, then rows in order, then Save changes, Discard. **Motion.** Choice slides 240ms and the section swaps at once. Note fades in 140ms. Reduced motion: instant.
+**Widths.** The column is 640px wide. 1280: name left, control right (280px). 560 and below: control under the name, full width, rows inside a group step in 16px. 480 and below: the save bar's line takes its own row and the two buttons share the row under it. No sideways scroll at 1280, 375 or 320.
+
+**Keyboard.** The Setup, Your data and AI choice; then per card: search, Clear, group rows in order (Enter or Space opens), rows inside open groups, and in Income and Expenses each group's Options button after its row, then Add a group; then Save changes, Discard. Options menu: arrow keys move, Enter picks, Esc closes and returns focus to the Options button. Name field: Enter saves, Esc cancels and returns focus to where it started. Dialogs trap focus and start on the safe button.
+
+**Motion.** Choice slides 240ms and the section swaps at once. Groups open in 200ms (fade and 6px drop) and close at once; the chevron turns 200ms. Search narrows at once. The menu opens like a picker, 200ms. Errors fade in 140ms. The save bar doesn't animate: it simply sticks when there are changes. Reduced motion: instant.
 
 ## Screen 14: Settings, delete my data
 

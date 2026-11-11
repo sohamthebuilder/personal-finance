@@ -13,7 +13,7 @@ export function Logo() {
 }
 
 /** The Task layout. `step` is 0 to 3 for the first-time flow, or null for log in, locked and the like. */
-export function TaskFrame({ step, children }: { step: number | null; children: ReactNode }) {
+export function TaskFrame({ step, wide, children }: { step: number | null; wide?: boolean; children: ReactNode }) {
   return (
     <div className="task">
       <aside className="rail">
@@ -61,7 +61,7 @@ export function TaskFrame({ step, children }: { step: number | null; children: R
           )}
         </div>
         <div className="task__pane">
-          <div className="task__body enter">{children}</div>
+          <div className={`task__body ${wide ? "task__body--wide" : ""} enter`}>{children}</div>
         </div>
       </div>
     </div>

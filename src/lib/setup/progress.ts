@@ -15,7 +15,7 @@ const PROGRESS_SCHEMA = `
   ) STRICT
 `;
 
-function tableHasRow(db: Db, table: "import_rows" | "setup_choices" | "setup_progress"): boolean {
+function tableHasRow(db: Db, table: "import_rows" | "setup_saved" | "setup_progress"): boolean {
   const exists = db.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?").get(table);
   if (exists === undefined) return false;
   return db.prepare(`SELECT 1 FROM ${table} LIMIT 1`).get() !== undefined;
@@ -23,7 +23,7 @@ function tableHasRow(db: Db, table: "import_rows" | "setup_choices" | "setup_pro
 
 export function firstTimeStep(db: Db): FirstTimeStep {
   if (!tableHasRow(db, "import_rows")) return "upload";
-  if (!tableHasRow(db, "setup_choices")) return "setup";
+  if (!tableHasRow(db, "setup_saved")) return "setup";
   if (!tableHasRow(db, "setup_progress")) return "summary";
   return "shell";
 }

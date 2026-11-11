@@ -16,7 +16,7 @@ const JANUARY = { from: "2024-01-01", to: "2024-01-31" };
 
 function assertAddsUp(rows: readonly ImportRow[], setup: Setup, period: { from: string; to: string }, today: string): void {
   const b = netWorthBreakdown(rows, setup, period, today);
-  const lines = b.earned - b.spent + b.investmentReturns + b.recovered + b.otherCorrections + b.loans + b.unmatchedTransfers;
+  const lines = b.earned - b.spent + b.otherCorrections + b.unmatchedTransfers;
   assert.equal(lines, b.change, JSON.stringify(period));
   assert.equal(b.change, b.closing - b.opening);
 }
@@ -50,7 +50,8 @@ describe("metrics on the sample", () => {
   it("AC-24: the record isn't all zeros, so the match above proves something", () => {
     const totals = sample.expectedTotals(ALL.from, ALL.to);
     for (const [line, value] of Object.entries(totals)) assert.notEqual(value, 0, line);
-    assert.equal(sample.expectedTotals("2025-06-01", "2025-07-31").recovered, 8_000_00 - 3_250_75);
+    // Money paid back is a correction like any other now (AC-29).
+    assert.equal(sample.expectedTotals("2025-06-01", "2025-07-31").otherCorrections, 8_000_00 - 3_250_75);
   });
 
   it("AC-19 and AC-24: net worth equals the generator's balances, today and on a past date", () => {
@@ -77,9 +78,15 @@ describe("metrics on the sample", () => {
     assert.equal(netWorth(rows, "2026-07-01", "2026-07-01") - netWorth(rows, sample.today, sample.today), 150_000_00 - 12_345_67);
   });
 
-  it("AC-20: net worth ignores the trends start date", () => {
-    assert.equal(netWorthBreakdown(rows, { ...setup, trendsStartDate: "2026-01-01" }, ALL, sample.today).closing,
-      netWorthBreakdown(rows, { ...setup, trendsStartDate: null }, ALL, sample.today).closing);
+  it("AC-29: income groups change no number, and the breakdown has no Returns, Loans or Recovered line", () => {
+    const ungrouped = { ...setup, income: EMPTY_SETUP.income, expense: EMPTY_SETUP.expense };
+    assert.deepEqual(periodMetrics(rows, ungrouped, ALL, sample.today), periodMetrics(rows, setup, ALL, sample.today));
+    assert.deepEqual(netWorthBreakdown(rows, ungrouped, ALL, sample.today), netWorthBreakdown(rows, setup, ALL, sample.today));
+    const lines = Object.keys(netWorthBreakdown(rows, setup, ALL, sample.today)).sort();
+    assert.deepEqual(lines, ["change", "closing", "earned", "opening", "otherCorrections", "spent", "unmatchedTransfers"]);
+    // The loan and the market moves logged as income are in Earned (the accepted gap).
+    const all = rows.filter((row) => row.type === "Income").reduce((sum, row) => sum + row.amountPaise, 0);
+    assert.equal(periodMetrics(rows, setup, ALL, "2099-01-01").earned, all);
   });
 
   it("AC-21: the breakdown adds up for every month, every year and the whole history", () => {
@@ -153,7 +160,9 @@ describe("metrics on the sample", () => {
 });
 
 describe("metrics on hand-worked rows", () => {
-  const returnsAndLoans = setupWith({ returnCategories: new Set(["Market"]), loanCategories: new Set(["Loan"]) });
+  const incomeGroups = setupWith({
+    income: { names: ["Work", "Savings", "Borrowed"], placed: new Map([["Salary", 0], ["Market", 1], ["Loan", 2]]) },
+  });
 
   it("AC-9: dates are inclusive at both ends, and use the date as written", async () => {
     const rows = await rowsFrom([
@@ -174,34 +183,26 @@ describe("metrics on hand-worked rows", () => {
     assert.throws(() => periodMetrics(rows, EMPTY_SETUP, JANUARY, "today"), InvalidPeriod);
     assert.throws(() => netWorth(rows, "soon", TODAY), InvalidPeriod);
     assert.deepEqual(periodMetrics([], EMPTY_SETUP, JANUARY, TODAY), {
-      earned: 0, spent: 0, investmentReturns: 0, loans: 0, recovered: 0, otherCorrections: 0, invested: 0,
-      unmatchedTransfers: 0, saved: 0, savingsRate: null,
+      earned: 0, spent: 0, otherCorrections: 0, invested: 0, unmatchedTransfers: 0, saved: 0, savingsRate: null,
     });
   });
 
-  it("AC-10, AC-13 and AC-14: a market loss doesn't reduce Earned, and loans stay on their own line", async () => {
+  it("AC-29: income in several groups, and in none, all counts as Earned, losses included", async () => {
     const rows = await rowsFrom([
-      { period: at("01"), inr: 1000, type: "Income", category: "Salary" },
-      { period: at("02"), inr: -300.5, type: "Income", category: "Market" },
-      { period: at("03"), inr: 100, type: "Income", category: "Market" },
+      { period: at("01"), inr: 1000, type: "Income", category: "Salary", subcategory: "Pay" },
+      { period: at("02"), inr: -300.5, type: "Income", category: "Market", subcategory: "Shares" },
+      { period: at("03"), inr: 100, type: "Income", category: "Market", subcategory: "Funds" },
       { period: at("04"), inr: 5000, type: "Income", category: "Loan" },
+      { period: at("05"), inr: 40, type: "Income", category: "Not Placed" },
+      { period: at("06"), inr: 10, type: "Exp.", category: "Market" },
+      { period: at("07"), inr: 20, type: "Income Balance", category: "Market" },
     ]);
-    const metrics = periodMetrics(rows, returnsAndLoans, JANUARY, TODAY);
-    assert.equal(metrics.earned, 1000_00);
-    assert.equal(metrics.investmentReturns, -200_50);
-    assert.equal(metrics.loans, 5000_00);
-  });
-
-  it("AC-10: only Income rows are matched on category, and an unpicked category counts as Earned", async () => {
-    const rows = await rowsFrom([
-      { period: at("01"), inr: 10, type: "Exp.", category: "Market" },
-      { period: at("02"), inr: 20, type: "Income Balance", category: "Market" },
-      { period: at("03"), inr: 40, type: "Income", category: "Brand New" },
-    ]);
-    const metrics = periodMetrics(rows, returnsAndLoans, JANUARY, TODAY);
+    const metrics = periodMetrics(rows, incomeGroups, JANUARY, TODAY);
+    assert.equal(metrics.earned, 1000_00 - 300_50 + 100_00 + 5000_00 + 40_00);
     assert.equal(metrics.spent, 10_00);
-    assert.equal(metrics.investmentReturns, 0);
-    assert.equal(metrics.earned, 40_00);
+    assert.equal(metrics.otherCorrections, 20_00);
+    assert.deepEqual(metrics, periodMetrics(rows, EMPTY_SETUP, JANUARY, TODAY));
+    assertAddsUp(rows, incomeGroups, JANUARY, TODAY);
   });
 
   it("AC-11: identical repeats all count, and a large one-off stays in", async () => {
@@ -228,18 +229,17 @@ describe("metrics on hand-worked rows", () => {
     assert.equal(noEarned.saved, -150_00);
   });
 
-  it("AC-15: corrections split into Recovered and Other, and never touch Earned, Spent or Saved", async () => {
+  it("AC-15 and AC-29: every correction, on any account, is in Other corrections, and never touches Earned, Spent or Saved", async () => {
     const rows = await rowsFrom([
       { period: at("01"), account: "Reimb", inr: 500, type: "Income Balance" },
       { period: at("02"), account: "Reimb", inr: 120.25, type: "Expense Balance" },
       { period: at("03"), account: "Bank", inr: 900, type: "Income Balance" },
       { period: at("04"), account: "Bank", inr: 1000, type: "Expense Balance" },
     ]);
-    const metrics = periodMetrics(rows, setupWith({ reimbursementAccount: "Reimb" }), JANUARY, TODAY);
-    assert.equal(metrics.recovered, 379_75);
-    assert.equal(metrics.otherCorrections, -100_00);
+    const metrics = periodMetrics(rows, EMPTY_SETUP, JANUARY, TODAY);
+    assert.equal(metrics.otherCorrections, 500_00 - 120_25 + 900_00 - 1000_00);
     assert.deepEqual([metrics.earned, metrics.spent, metrics.saved], [0, 0, 0]);
-    assert.equal(periodMetrics(rows, EMPTY_SETUP, JANUARY, TODAY).recovered, 0);
+    assertAddsUp(rows, EMPTY_SETUP, JANUARY, TODAY);
   });
 
   it("AC-16 and AC-17: Invested counts money crossing the group, once, and a move inside it is zero", async () => {
@@ -283,8 +283,8 @@ describe("metrics on hand-worked rows", () => {
 
   it("names that look like object internals are plain data", async () => {
     const rows = await rowsFrom([{ period: at("01"), account: "__proto__", category: "constructor", inr: 10, type: "Income" }]);
-    const setup = setupWith({ returnCategories: new Set(["constructor"]), reimbursementAccount: "__proto__" });
-    assert.equal(periodMetrics(rows, setup, JANUARY, TODAY).investmentReturns, 10_00);
+    const setup = setupWith({ groups: new Map([["__proto__", "Bank"]]), income: { names: ["__proto__"], placed: new Map([["constructor", 0]]) } });
+    assert.equal(periodMetrics(rows, setup, JANUARY, TODAY).earned, 10_00);
     assert.equal(netWorth(rows, TODAY, TODAY), 10_00);
   });
 

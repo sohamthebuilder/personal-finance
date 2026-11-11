@@ -3,6 +3,7 @@
  * Uses a made-up database in a temporary HOME and a fake clock.
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { createPassword, deleteMyData, logIn, logOut } from "../src/lib/auth/actions.ts";
 import {
@@ -16,6 +17,7 @@ import {
   sessionStore,
   sweep,
   tokenFromCookieHeader,
+  waitSeconds,
 } from "../src/lib/auth/session.ts";
 import { MADE_UP_PASSWORD, makeDatabase, type TempHome, tempHome } from "./support/app-helpers.ts";
 
@@ -164,6 +166,36 @@ describe("slow-down (condition 45)", () => {
     const started = beginPasswordCheck();
     assert.ok(started.ok);
     assert.equal(sessionStore().failures, 1);
+  });
+
+  it("gives a correct log in after a wait no second wait, even while it's being checked (S4-14)", async () => {
+    await makeDatabase(home.files, "shell");
+    for (let i = 0; i < 4; i += 1) await logIn("wrong made-up phrase", home.files);
+    clock += 30_000;
+    const running = logIn(MADE_UP_PASSWORD, home.files);
+    // What a page load or a second request sees while the correct try is hashing.
+    assert.equal(waitSeconds(), 0, "no wait shows during the check");
+    assert.deepEqual(beginPasswordCheck(), { ok: false, waitSeconds: 2 }, "a second try gets the short fixed wait, not the next wait");
+    assert.ok((await running).ok);
+    assert.equal(waitSeconds(), 0);
+    assert.equal(sessionStore().failures, 0);
+  });
+
+  it("still starts the wait when the try turns out wrong (S4-14)", async () => {
+    await makeDatabase(home.files, "shell");
+    for (let i = 0; i < 3; i += 1) await logIn("wrong made-up phrase", home.files);
+    const started = beginPasswordCheck();
+    assert.ok(started.ok);
+    assert.equal(sessionStore().failures, 4, "counted before hashing");
+    assert.equal(waitSeconds(), 0);
+    started.finish(false);
+    assert.equal(waitSeconds(), 30);
+  });
+
+  it("guards the log in form with a ref, so a second Return can't send a second request (S4-14)", () => {
+    const page = readFileSync("src/app/ui/log-in.tsx", "utf8");
+    assert.match(page, /const sending = useRef\(false\)/);
+    assert.match(page, /if \(sending\.current \|\| busy \|\| wait > 0\) return;\n\s+sending\.current = true;/);
   });
 
   it("shares one count across log in, Locked and Delete my data", async () => {

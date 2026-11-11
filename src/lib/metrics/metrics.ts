@@ -20,9 +20,7 @@ export interface PeriodMetrics {
   saved: number;
   /** Saved ÷ Earned as a fraction, or null when Earned is zero. */
   savingsRate: number | null;
-  investmentReturns: number;
-  loans: number;
-  recovered: number;
+  /** Every balance correction, both ways. */
   otherCorrections: number;
   invested: number;
   /** The signed effect of transfers with no partner. Normally zero. */
@@ -35,10 +33,7 @@ export interface NetWorthBreakdown {
   change: number;
   earned: number;
   spent: number;
-  investmentReturns: number;
-  recovered: number;
   otherCorrections: number;
-  loans: number;
   unmatchedTransfers: number;
 }
 
@@ -72,7 +67,7 @@ export function periodMetrics(rows: readonly ImportRow[], setup: Setup, period: 
   const end = earlierOf(period.to, today);
   const unmatched = new Set(pairTransfers(rows).unmatchedRows);
   const totals = {
-    earned: 0, spent: 0, investmentReturns: 0, loans: 0, recovered: 0, otherCorrections: 0, invested: 0, unmatchedTransfers: 0,
+    earned: 0, spent: 0, otherCorrections: 0, invested: 0, unmatchedTransfers: 0,
   };
 
   for (const row of rows) {
@@ -83,18 +78,16 @@ export function periodMetrics(rows: readonly ImportRow[], setup: Setup, period: 
       case "Exp.":
         totals.spent += row.amountPaise;
         break;
+      // All income is Earned, whatever group the owner put it in (brief, "Second change, income groups").
       case "Income":
-        if (setup.returnCategories.has(row.category)) totals.investmentReturns += row.amountPaise;
-        else if (setup.loanCategories.has(row.category)) totals.loans += row.amountPaise;
-        else totals.earned += row.amountPaise;
+        totals.earned += row.amountPaise;
         break;
       case "Income Balance":
-      case "Expense Balance": {
-        const signed = row.type === "Income Balance" ? row.amountPaise : -row.amountPaise;
-        if (row.account === setup.reimbursementAccount) totals.recovered += signed;
-        else totals.otherCorrections += signed;
+        totals.otherCorrections += row.amountPaise;
         break;
-      }
+      case "Expense Balance":
+        totals.otherCorrections -= row.amountPaise;
+        break;
       case "Transfer-In":
       case "Transfer-Out":
         totals.invested += investedBy(row, setup);
@@ -117,12 +110,11 @@ export function netWorth(rows: readonly ImportRow[], date: string, today: string
 
 /** Explains the change in net worth over a period, line by line. */
 export function netWorthBreakdown(rows: readonly ImportRow[], setup: Setup, period: Period, today: string): NetWorthBreakdown {
-  const { earned, spent, investmentReturns, recovered, otherCorrections, loans, unmatchedTransfers } =
-    periodMetrics(rows, setup, period, today);
+  const { earned, spent, otherCorrections, unmatchedTransfers } = periodMetrics(rows, setup, period, today);
   const opening = netWorth(rows, dayBefore(period.from), today);
   const closing = netWorth(rows, period.to, today);
   return {
     opening, closing, change: closing - opening,
-    earned, spent, investmentReturns, recovered, otherCorrections, loans, unmatchedTransfers,
+    earned, spent, otherCorrections, unmatchedTransfers,
   };
 }

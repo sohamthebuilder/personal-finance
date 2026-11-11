@@ -20,7 +20,8 @@ The owner fills this through their reply in chat. Nothing after the brief starts
 - **Status:** Approved
 - **Date:** 2026-11-08
 - **Owner's words:** "Yes, approve", accepting the brief with all five working defaults: split into 4A and 4B, use 15 to 25 weekly points on 4A and stop at 95% weekly, new previews only for screens 2, 3, 14 and 13, a placeholder Overview, and merge Phase 3 before Phase 4.
-- **Later changes approved:** 2026-11-08, the owner said "Yes, approve all" to: the previews of screens 2, 3 and 14 with the new `.cmd` part, `copy` and `trash` icons and two new lines of wording; ending the 4A try-out at a placeholder upload screen with no shortcut to fill in data (S4-6); and AC-18's new wording on `ALREADY_IMPORTED` (S4-13).
+- **Part 4B sign-off (AC-26):** 2026-11-11, the owner said "Yes, sign off", including the design system fix that wraps long names inside their row.
+- **Later changes approved:** 2026-11-11, the owner said "Yes, Ungrouped is fine": on an update, new accounts go in Ungrouped until the owner chooses a group, as the approved screen 8 preview shows. This replaces "New accounts still need a group before Replace" in the setup answers change. 2026-11-10, the owner said "Yes, approve all" to the redrawn previews of screens 5, 8 and 13, the design system addition (folds, search, inline group naming, save bar, search, x and plus icons, the `[hidden]` rule), separate income and expense group lists, and all new wording marked (new) in `phase-3/design.md`. Before that on 2026-11-10, "Yes, approve" to the second change, income groups (income works like expenses with the owner's own groups, no Earned, Returns or Loan, all income counts as Earned, accepted gap on the savings rate). Earlier on 2026-11-10, "Yes, approve" to the setup answers change below (accounts by group, income per subcategory, expense groups, no reimbursement or reliable-from question, screens 5, 8 and 13 to match, AC-19 and AC-23 changed, AC-27 to AC-29 added). 2026-11-08, the owner said "Yes, approve all" to: the previews of screens 2, 3 and 14 with the new `.cmd` part, `copy` and `trash` icons and two new lines of wording; ending the 4A try-out at a placeholder upload screen with no shortcut to fill in data (S4-6); and AC-18's new wording on `ALREADY_IMPORTED` (S4-13).
 
 ## Split into two parts (working default, question 1)
 
@@ -135,3 +136,52 @@ Then open `http://127.0.0.1:3000` in Chrome. Use only the made-up sample file th
 3. **Previews: only screens 2, 3, 14 (and 13 in Part 4B) get new previews, since screens 1, 4, 5, 6, 7 and 8 already have one you approved.** Default: yes. Doesn't block. If you'd like fresh previews of all ten, that costs more budget.
 4. **After the summary, you land on a placeholder Overview that says "Your Overview arrives in the next phase".** Default: yes. Doesn't block.
 5. **Merge Phase 3 into `main` before Phase 4 is committed?** Phase 4 is built on top of Phase 3, which isn't merged yet. Default: merge Phase 3 when you next ask for a merge, then Phase 4 after it. Doesn't block the build.
+
+## Requirement change, setup answers (approved by the owner, 2026-11-10)
+
+The owner reviewed the screen 13 preview and asked for five changes. On 2026-11-10 they answered three questions: expense categories go into **groups they name**, income is sorted **per subcategory**, and for reimbursements "the money manager has transfer type (other than income and expense)". This changes setup answers that Phase 2 uses, so it needs the owner's yes before any design or build.
+
+**What changes**
+1. **Accounts by group.** Setup lists the account groups (Ungrouped first, then Bank, Cards, Wallets, Investments, Money with others, Business), each with its count. Opening a group lists its accounts, and each account has a picker to move it to another group. A search box finds an account by name. Balances aren't shown, because the dashboards show them.
+2. **Income per subcategory.** Each income subcategory is Earned, Returns or Loan on its own. Categories are listed closed, with a short count such as "4 Earned · 1 Returns". Opening one lists its subcategories, each with the three-way choice, plus "Set all to" for the whole category. A category with no subcategories has one choice. A search box finds a category or subcategory.
+3. **Expense groups (new).** The owner names their own groups, such as Needs and Wants, and puts each expense category in one. Subcategories follow their category. A category not yet placed reads "Not grouped". Groups can be added, renamed and removed, and a removed group's categories go back to "Not grouped". The dashboards use these groups from Phase 6 on.
+4. **No "Paid back and history".** The reimbursement question goes, because money paid back is logged as a transfer. Corrections that used to show as Recovered count with Other corrections instead, so net worth is still fully explained. The "history becomes reliable" question goes too, and spending trends use the full history.
+5. **Screen 8 matches.** On an update, new income subcategories get their Earned, Returns or Loan choice, and new expense categories show as "Not grouped" for Settings. New accounts still need a group before Replace.
+6. **Screen 5 matches.** First-time setup uses the same controls, so it changes in the same way. It becomes three parts: Accounts, Income and Expenses. Expense groups are optional the first time ("You can do this later in Settings"), and every account still needs a group.
+
+**Working defaults (say if you want any different)**
+- Up to 12 expense groups, each name up to 40 characters, with no two the same. Names are stored encrypted, like everything else.
+- Generic keyword suggestions still fill in what they can for accounts and income. Expenses start with no groups.
+- Changes in Phase 2's rules: income kinds are read per subcategory, the reimbursement account and trends start date go, and the Recovered line in the net worth breakdown merges into Other corrections. `docs/PROJECT_BRIEF.md` section 3 is updated to match.
+- **Fits in 4B:** screens 5 and 13 are both 4B screens, and the build of the rest of 4B carries on meanwhile. Expense groups appear in dashboards only from Phase 6.
+
+**New and changed acceptance criteria**
+- **AC-19 (changed)** First upload, setup and summary run in order. Setup has Accounts, Income and Expenses. Every account needs a group, and every income subcategory has a kind. Answers save, and the summary shows every line the design lists before the owner confirms.
+- **AC-23 (changed)** Settings setup lets the owner change account groups, income kinds per subcategory and expense groups after the first time, with the same checks as screen 5.
+- **AC-27 (new)** Setup works with at least 60 accounts and 40 income and 40 expense categories with subcategories. Groups and categories open and close by keyboard, search narrows the list, and there's no sideways scroll at 1280, 375 and 320.
+- **AC-28 (new)** Expense groups: add, rename and remove work, with the limits above refused by the server too. Group names show as plain text only, and a removed group's categories read "Not grouped".
+- **AC-29 (new)** Phase 2's metrics use income kinds per subcategory, the reimbursement and trends-start answers are gone, and the net worth breakdown still adds up to the change in net worth. Tests cover a category whose subcategories have different kinds.
+
+**Next if approved:** the Designer remakes the screen 13 preview and updates screen 5 in `previews/first-time.html`, for the owner's yes before they're built.
+
+### Second change, income groups (approved by the owner, 2026-11-10)
+
+After seeing the previews, the owner said the Earned, Returns and Loan labels make Income complicated, and asked for Income to work like Expenses. Asked how, they chose "Like expenses, my own groups".
+
+**What changes**
+1. **Income works exactly like Expenses.** The owner names their own income groups, puts each income category in one, and subcategories go with their category. Unplaced categories read "Not grouped". Same limits: up to 12 groups, 40 characters, no two the same. Income groups are optional the first time, like expense groups.
+2. **No Earned, Returns or Loan choice anywhere.** That goes from screens 5, 8 and 13. On an update, new income categories show as "Not grouped", like new expense categories. Keyword suggestions for income go too.
+3. **The numbers.** All income counts as Earned. So:
+   - The savings rate counts any loan received or investment gain logged as income as if it were earned. It looks higher in a month with a loan.
+   - The net worth breakdown loses its Investment returns and Loans lines. That money sits in Earned, and the breakdown still adds up to the change in net worth.
+   - Accounts & Investments (Phase 8) can still show investment returns, worked out from balances and money put in, not from income labels.
+   - `docs/PROJECT_BRIEF.md` section 3 changes to match: "Earned: all income rows, except balance corrections". The setup step there becomes "group your accounts, and optionally your income and expense categories".
+4. **First-time setup** keeps three parts: Accounts (required), Income (optional), Expenses (optional).
+
+**Criteria this replaces**
+- **AC-19:** Setup has Accounts, Income and Expenses. Every account needs a group. Income and expense groups are optional. Answers save, and the summary shows every line the design lists before the owner confirms.
+- **AC-23:** Settings setup lets the owner change account groups and their income and expense groups after the first time, with the same checks as screen 5.
+- **AC-28:** Income and expense groups: add, rename and remove work, with the limits refused by the server too. Group names show as plain text only. A removed group's categories read "Not grouped".
+- **AC-29:** Phase 2's metrics count all income rows as Earned. The reimbursement, trends-start, returns and loan answers are gone. The net worth breakdown still adds up to the change in net worth. Tests cover income in several groups.
+
+**Accepted gap, if approved:** the savings rate and Earned include loans and investment gains logged as income.
