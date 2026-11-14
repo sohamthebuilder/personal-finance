@@ -7,17 +7,17 @@ import { LogIn } from "./log-in.tsx";
 import { PeriodPicker } from "./period-picker.tsx";
 import { Logo, TaskFrame } from "./task-frame.tsx";
 
-export type ShellScreen = "overview" | "upload" | "settings";
+export type ShellScreen = "overview" | "spending" | "upload" | "settings";
 
-const NAV: Array<{ name: string; short: string; icon: IconName; href: string | null }> = [
-  { name: "Overview", short: "Overview", icon: "home", href: "/" },
-  // Built in Phases 6 to 8. Shown, but not links yet.
-  { name: "Spending", short: "Spending", icon: "bars", href: null },
+const NAV: Array<{ name: string; short: string; icon: IconName; href: string | null; screen?: ShellScreen }> = [
+  { name: "Overview", short: "Overview", icon: "home", href: "/", screen: "overview" },
+  { name: "Spending", short: "Spending", icon: "bars", href: "/spending", screen: "spending" },
+  // Built in Phases 7 and 8. Shown, but not links yet.
   { name: "Savings & Net worth", short: "Savings", icon: "trend", href: null },
   { name: "Accounts & Investments", short: "Accounts", icon: "bank", href: null },
 ];
 
-const TITLES: Record<ShellScreen, string> = { overview: "Overview", upload: "Upload", settings: "Settings" };
+const TITLES: Record<ShellScreen, string> = { overview: "Overview", spending: "Spending", upload: "Upload", settings: "Settings" };
 
 function readCollapsed(): boolean {
   try {
@@ -127,7 +127,7 @@ export function Shell(props: {
         </div>
         {NAV.map((item) =>
           item.href ? (
-            <a key={item.name} className="side__link" href={item.href} data-tip={item.name} aria-current={props.screen === "overview" ? "page" : undefined}>
+            <a key={item.name} className="side__link" href={item.href} data-tip={item.name} aria-current={props.screen === item.screen ? "page" : undefined}>
               <Icon name={item.icon} />
               <span className="side__text">{item.name}</span>
             </a>
@@ -190,7 +190,7 @@ export function Shell(props: {
       <nav className="tabbar" aria-label="Screens">
         {NAV.map((item) =>
           item.href ? (
-            <a key={item.name} href={item.href} aria-current={props.screen === "overview" ? "page" : undefined}>
+            <a key={item.name} href={item.href} aria-current={props.screen === item.screen ? "page" : undefined}>
               <Icon name={item.icon} />
               {item.short}
             </a>

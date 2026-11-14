@@ -119,6 +119,20 @@ export function netWorthBreakdown(rows: readonly ImportRow[], setup: Setup, peri
   };
 }
 
+/**
+ * The rows that make up Spent in a period: `Exp.` rows dated in it, up to today.
+ * The same rule as `periodMetrics`. Every spending figure on every screen starts here.
+ */
+export function spentRows(rows: readonly ImportRow[], period: Period, today: string): ImportRow[] {
+  checkPeriod(period, today);
+  const end = earlierOf(period.to, today);
+  return rows.filter((row) => {
+    if (row.type !== "Exp.") return false;
+    const date = dateOf(row);
+    return date >= period.from && date <= end;
+  });
+}
+
 export interface CategorySpend {
   /** The category as written in the file. Blank stays blank; screens label it. */
   category: string;
@@ -130,15 +144,8 @@ export interface CategorySpend {
  * dates as `periodMetrics`, so the lines add up to its Spent. Ties go by name.
  */
 export function spendingByCategory(rows: readonly ImportRow[], period: Period, today: string): CategorySpend[] {
-  checkPeriod(period, today);
-  const end = earlierOf(period.to, today);
   const totals = new Map<string, number>();
-  for (const row of rows) {
-    if (row.type !== "Exp.") continue;
-    const date = dateOf(row);
-    if (date < period.from || date > end) continue;
-    totals.set(row.category, (totals.get(row.category) ?? 0) + row.amountPaise);
-  }
+  for (const row of spentRows(rows, period, today)) totals.set(row.category, (totals.get(row.category) ?? 0) + row.amountPaise);
   return [...totals]
     .map(([category, spent]) => ({ category, spent }))
     .sort((a, b) => b.spent - a.spent || (a.category < b.category ? -1 : a.category > b.category ? 1 : 0));

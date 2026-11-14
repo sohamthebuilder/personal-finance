@@ -167,6 +167,13 @@ export function OverviewScreen({ periodKey }: { periodKey: string }) {
     if (reply.status === 401) leaveToStart();
   }
 
+  /** A top category opens Spending at that category, for the same period (AC-13). Nothing goes in the web address. */
+  async function openCategory(category: string) {
+    const reply = await postForm("/api/spending/open", { category });
+    if (reply.status === 401) return leaveToStart();
+    window.location.assign("/spending");
+  }
+
   async function showThisMonth() {
     const reply = await postForm("/api/period", { period: "this-month" });
     if (reply.status === 401) return leaveToStart();
@@ -269,9 +276,17 @@ export function OverviewScreen({ periodKey }: { periodKey: string }) {
               </p>
             )
           ) : (
-            view.top.map((line, index) => (
-              <CategoryRow key={index} name={categoryName(line.category)} amount={money(`cat${index}`)} share={line.spent / (view.top[0]?.spent || 1)} />
-            ))
+            <ol className="ranks">
+              {view.top.map((line, index) => (
+                <CategoryRow
+                  key={index}
+                  name={categoryName(line.category)}
+                  amount={money(`cat${index}`)}
+                  share={line.spent / (view.top[0]?.spent || 1)}
+                  onOpen={() => void openCategory(line.category)}
+                />
+              ))}
+            </ol>
           )}
         </section>
       </div>
@@ -288,9 +303,9 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** One top category: a plain row until Phase 6. The meter's width is set from script (D-010). */
-function CategoryRow({ name, amount, share }: { name: string; amount: string; share: number }) {
-  const fill = useRef<HTMLDivElement>(null);
+/** One top category, as a ranked row that opens Spending at it (Phase 6, AC-13). The meter's width is set from script (D-010). */
+function CategoryRow({ name, amount, share, onOpen }: { name: string; amount: string; share: number; onOpen: () => void }) {
+  const fill = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     // One frame later, so the width moves from where it was.
     const frame = requestAnimationFrame(() => {
@@ -299,15 +314,20 @@ function CategoryRow({ name, amount, share }: { name: string; amount: string; sh
     return () => cancelAnimationFrame(frame);
   }, [share]);
   return (
-    <div className="cat-row">
-      <div className="cat-row__line">
-        <span className="cat-row__name">{name}</span>
-        <span className="num">{amount}</span>
-      </div>
-      <div className="meter" aria-hidden="true">
-        <div className="bg-spent" ref={fill} />
-      </div>
-    </div>
+    <li>
+      <button className="rank" type="button" aria-label={`${name}, ${amount}. Open in Spending`} onClick={onOpen}>
+        <span>
+          <span className="rank__line">
+            <span className="rank__name">{name}</span>
+            <span className="num">{amount}</span>
+          </span>
+          <span className="meter" aria-hidden="true">
+            <span className="bg-spent" ref={fill} />
+          </span>
+        </span>
+        <Icon name="chev" />
+      </button>
+    </li>
   );
 }
 

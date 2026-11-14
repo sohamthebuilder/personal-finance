@@ -478,6 +478,48 @@ a.pop__opt { color: var(--ink); }
 .cat-row .meter { height: 6px; margin-top: 6px; }
 /* Read by screen readers only. */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---------- Drill-down parts (Phase 6) ---------- */
+/* Path back up a drill-down: "Spending / Groceries / Vegetables". Earlier steps are links, the last is plain. */
+.path ol { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--s-2); margin: 0 0 var(--s-3); padding: 0; list-style: none; font-size: var(--t-label); font-weight: 500; color: var(--ink-2); }
+.path li { display: flex; align-items: center; gap: var(--s-2); min-width: 0; overflow-wrap: anywhere; }
+.path li + li::before { content: "/"; color: var(--control); }
+.path [aria-current] { color: var(--ink); }
+/* Ranked rows that open the next level. Lines between rows, no boxes. The whole row is one button. */
+.ranks { margin: 0; padding: 0; list-style: none; }
+.ranks > li + li { border-top: 1px solid var(--line); }
+.rank { display: grid; grid-template-columns: minmax(0, 1fr) 20px; align-items: center; column-gap: var(--s-3); width: calc(100% + 2 * var(--s-3)); margin: 0 calc(-1 * var(--s-3)); padding: var(--s-3); background: none; border: 0; border-radius: var(--r-control); color: var(--ink); text-align: left; cursor: pointer; transition: background-color var(--m-in) var(--ease); }
+.rank:hover { background: var(--surface-2); }
+.rank > .i { color: var(--ink-2); transform: rotate(-90deg); transition: transform var(--m-in) var(--ease); }
+.rank:hover > .i { transform: translateX(2px) rotate(-90deg); }
+.rank__line { display: flex; justify-content: space-between; gap: var(--s-3); min-width: 0; font-weight: 500; }
+.rank__name { min-width: 0; overflow-wrap: anywhere; }
+.rank > span, .rank__line, .rank__meta { min-width: 0; }
+.rank > span { display: block; }
+.rank .meter { display: block; height: 6px; margin-top: 6px; }
+.rank .meter > span { display: block; height: 100%; width: 0; border-radius: 2px; transition: width var(--m-bar) var(--ease); }
+.rank__meta { display: flex; flex-wrap: wrap; gap: 2px var(--s-4); margin-top: 6px; font-size: var(--t-label); color: var(--ink-2); }
+/* Transaction rows: note and amount, then date and account. Long notes wrap. */
+.txns { margin: 0; padding: 0; list-style: none; }
+.txn { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--s-4); padding: var(--s-3) 0; border-top: 1px solid var(--line); }
+.txns > .txn:first-child { border-top: 0; }
+.txn__note { min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.txn__amt { text-align: right; font-weight: 500; white-space: nowrap; }
+.txn__meta, .txn__orig { font-size: var(--t-label); color: var(--ink-2); }
+.txn__orig { text-align: right; white-space: nowrap; }
+/* A chart with more bars than fit: it scrolls sideways inside its card, never the page. */
+.chart--scroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; padding-bottom: var(--s-1); }
+.chart-split { display: flex; align-items: flex-start; }
+.chart-split > svg { flex: none; width: auto; }
+.chart--scroll svg { width: auto; max-width: none; }
+.chart-split > .chart--scroll { flex: 1; min-width: 0; }
+/* A side card that sits beside two stacked cards on wide windows, and in reading order on narrow ones. */
+.grid__side { grid-row: span 2; align-self: start; }
+@media (max-width: 1040px) { .grid__side { grid-row: auto; } }
+/* A segmented choice of two. */
+.seg--2 { --n: 2; }
+/* Step change backwards: slides in from the other side. */
+.enter--back { --dir: -8px; }
 </style>
 <style>
 /* Gallery layout only. Not part of the app. */
@@ -585,6 +627,13 @@ a.pop__opt { color: var(--ink); }
 <div class="card span-12"><ul class="list"><li><span style="display:flex;gap:12px;align-items:center"><span class="glyph"><svg class="i"><use href="#i-bank"/></svg></span>Bank</span><span class="num">₹4,96,250</span></li><li><span style="display:flex;gap:12px;align-items:center"><span class="glyph"><svg class="i"><use href="#i-card"/></svg></span>Cards</span><span class="num">−₹23,400</span></li></ul><br><div class="label" style="margin-bottom:6px">Progress <span class="tag">Suggested</span></div><div class="meter"><div id="m"></div></div></div>
 </div></section>
 
+<section><h2>Drill-down: path, ranked rows, transactions</h2><div class="grid">
+<div class="card span-7"><nav class="path" aria-label="Where you are"><ol><li><button class="link" type="button">Spending</button></li><li><button class="link" type="button">Groceries</button></li><li aria-current="page">Vegetables</li></ol></nav>
+<div class="card__head"><h2>By category</h2><div class="seg seg--2" data-i="0"><span class="seg__thumb"></span><label><input type="radio" name="gby" checked><span>Categories</span></label><label><input type="radio" name="gby"><span>Your groups</span></label></div></div>
+<ol class="ranks"><li><button class="rank" type="button"><span><span class="rank__line"><span class="rank__name">Rent</span><span class="num">₹18,000</span></span><span class="meter"><span class="bg-spent" style="width:100%"></span></span><span class="rank__meta"><span>44% of spent</span><span>Same as 1 to 7 Oct</span></span></span><svg class="i"><use href="#i-chev"/></svg></button></li>
+<li><button class="rank" type="button"><span><span class="rank__line"><span class="rank__name">Groceries</span><span class="num">₹8,640</span></span><span class="meter"><span class="bg-spent" style="width:48%"></span></span><span class="rank__meta"><span>21% of spent</span><span>+₹1,210 vs 1 to 7 Oct</span></span></span><svg class="i"><use href="#i-chev"/></svg></button></li></ol></div>
+<div class="card span-5"><ol class="txns"><li class="txn"><span class="txn__note">Weekly vegetables</span><span class="txn__amt num">₹469.40</span><span class="txn__meta">3 Nov 2026 · Cash wallet</span><span class="txn__orig"></span></li>
+<li class="txn"><span class="txn__note">Night market</span><span class="txn__amt num">₹406.58</span><span class="txn__meta">5 Nov 2026 · Daily Bank</span><span class="txn__orig">Paid 420.00 THB</span></li></ol></div></div></section>
 <section><h2>Loading skeleton</h2><div class="grid skel-wrap" aria-busy="true" aria-label="Loading">
 <div class="card card--hero span-5"><span class="skel skel--label"></span><span class="skel skel--display"></span><span class="skel skel--line"></span><span class="skel skel--spark"></span></div>
 <div class="card stats span-7"><div class="stat"><span class="skel skel--label"></span><span class="skel skel--figure"></span></div><div class="stat"><span class="skel skel--label"></span><span class="skel skel--figure"></span></div><div class="stat"><span class="skel skel--label"></span><span class="skel skel--figure"></span></div><div class="stat"><span class="skel skel--label"></span><span class="skel skel--figure"></span></div></div>

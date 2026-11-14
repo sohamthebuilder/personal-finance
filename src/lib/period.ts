@@ -90,3 +90,49 @@ export function rangeLine(period: Period, today: string, first: string | null): 
   const month = (iso: string) => `${MONTH_NAMES[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
   return from.slice(0, 7) === to.slice(0, 7) ? month(to) : `${month(from)} to ${month(to)}`;
 }
+
+function shiftDays(iso: string, days: number): string {
+  const date = new Date(`${iso}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return isoOf(date);
+}
+
+function daysIn(year: number, month: number): number {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+/** The same date a year earlier. 29 Feb becomes 28 Feb. */
+function yearEarlier(iso: string): string {
+  const { year, month, day } = parts(iso);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${year - 1}-${pad(month)}-${pad(Math.min(day, daysIn(year - 1, month)))}`;
+}
+
+/**
+ * The earlier period a screen compares with (design "Compared with"). This month
+ * compares with the same days of last month, Financial year with the same dates
+ * a year earlier, and Last 12 months or Custom with the same number of days just
+ * before. All has nothing before it, so it gives null.
+ */
+export function comparisonDates(period: Period, today: string, first: string | null): { from: string; to: string } | null {
+  if (period.kind === "all") return null;
+  const { from, to } = periodDates(period, today, first);
+  if (period.kind === "this-month") {
+    const t = parts(today);
+    const year = t.month === 1 ? t.year - 1 : t.year;
+    const month = t.month === 1 ? 12 : t.month - 1;
+    const key = `${year}-${String(month).padStart(2, "0")}`;
+    return { from: `${key}-01`, to: `${key}-${String(Math.min(t.day, daysIn(year, month))).padStart(2, "0")}` };
+  }
+  if (period.kind === "financial-year") return { from: yearEarlier(from), to: yearEarlier(to) };
+  const days = Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+  const end = shiftDays(from, -1);
+  return { from: shiftDays(end, -days), to: end };
+}
+
+/** "1 to 7 Oct", or with its year when that isn't this year: "1 Apr to 7 Nov 2025". */
+export function comparisonLabel(from: string, to: string, today: string): string {
+  const range = dayRange(from, to);
+  const year = today.slice(0, 4);
+  return from.slice(0, 4) === year && to.slice(0, 4) === year ? range.slice(0, -5) : range;
+}

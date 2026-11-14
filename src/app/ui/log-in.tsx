@@ -13,7 +13,7 @@ export type LogInMode =
   | { kind: "files-incomplete" }
   | { kind: "cant-open" };
 
-const RETURN_SCREENS = new Set(["/", "/settings", "/settings/delete", "/upload"]);
+const RETURN_SCREENS = new Set(["/", "/spending", "/settings", "/settings/delete", "/upload"]);
 
 /** Screens 2 and 3. Same layout; Locked has its title and one line saying why. */
 /** `wait` is the server's wait left at page load, so a reload mid-wait still shows the countdown (Q4-3). */
