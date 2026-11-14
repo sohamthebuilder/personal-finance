@@ -124,5 +124,7 @@ Fixes Q5-1 to Q5-5 done (Engineer). Narrow re-test (Sonnet): all five Fixed, no 
 - [x] `npm test`, `npm run typecheck`, `npm audit`, `npm run guard` pass.
 - [x] Security signed off with no "before merge" conditions.
 - [x] No owner-only steps beyond reviewing the preview.
-- [ ] The three GitHub checks on the final commit: only possible once the owner asks to commit and open the pull request.
+- [x] The three GitHub checks pass on pull request #12 (2026-11-14).
 - [x] Owner sign-off in chat, 2026-11-14: "Yes, sign off". Commit, push and merge only when the owner asks.
+
+**Owner, 2026-11-14: "Yes, merge".** Pull request #12 merged into `main`.
