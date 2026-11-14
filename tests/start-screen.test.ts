@@ -120,6 +120,9 @@ describe("no shortcut in 4A (condition 52)", () => {
       "password/create/route.ts",
       "period/route.ts",
       "setup/route.ts",
+      // Phase 6: Spending's figures, and the Overview's link to a category. Neither changes data.
+      "spending/open/route.ts",
+      "spending/route.ts",
       "start-over/route.ts",
       "status/route.ts",
       "summary/confirm/route.ts",

@@ -21,7 +21,7 @@ export const DELETE_TRIES_BEFORE_LOCK = 5;
 export type LockReason = "idle" | "logout" | "restart";
 
 /** The screens a log in can return to. A fixed list, never taken from a request. */
-export const RETURN_SCREENS = ["/", "/settings", "/settings/delete", "/upload"] as const;
+export const RETURN_SCREENS = ["/", "/spending", "/settings", "/settings/delete", "/upload"] as const;
 export type ReturnScreen = (typeof RETURN_SCREENS)[number];
 
 export type Period =
@@ -37,6 +37,8 @@ export interface Unlocked {
   pending: PendingUpdate | null;
   /** The Overview's old-upload note was dismissed. Lasts until the next log in (design, "Stale data"). */
   oldNoteDismissed?: boolean;
+  /** A category the Overview asked Spending to open at, used once by the next Spending load (AC-13). Memory only. */
+  spendingOpen?: string | null;
 }
 
 export interface SessionStore {

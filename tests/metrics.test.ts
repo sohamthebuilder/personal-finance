@@ -305,5 +305,6 @@ it("AC-25: the calculations are plain functions with no screen, file or database
     const source = readFileSync(`src/lib/metrics/${file}`, "utf8");
     assert.doesNotMatch(source, /from "(react|next|node:|fs|better-sqlite)/, file);
   }
-  assert.deepEqual(readdirSync("src/lib/metrics"), ["metrics.ts"]);
+  // Phase 6 adds the Spending breakdowns here, so both screens share one calculation (Phase 6 AC-18).
+  assert.deepEqual(readdirSync("src/lib/metrics").sort(), ["metrics.ts", "spending.ts"]);
 });

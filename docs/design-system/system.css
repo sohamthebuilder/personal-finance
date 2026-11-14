@@ -469,3 +469,45 @@ a.pop__opt { color: var(--ink); }
 .cat-row .meter { height: 6px; margin-top: 6px; }
 /* Read by screen readers only. */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---------- Drill-down parts (Phase 6) ---------- */
+/* Path back up a drill-down: "Spending / Groceries / Vegetables". Earlier steps are links, the last is plain. */
+.path ol { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--s-2); margin: 0 0 var(--s-3); padding: 0; list-style: none; font-size: var(--t-label); font-weight: 500; color: var(--ink-2); }
+.path li { display: flex; align-items: center; gap: var(--s-2); min-width: 0; overflow-wrap: anywhere; }
+.path li + li::before { content: "/"; color: var(--control); }
+.path [aria-current] { color: var(--ink); }
+/* Ranked rows that open the next level. Lines between rows, no boxes. The whole row is one button. */
+.ranks { margin: 0; padding: 0; list-style: none; }
+.ranks > li + li { border-top: 1px solid var(--line); }
+.rank { display: grid; grid-template-columns: minmax(0, 1fr) 20px; align-items: center; column-gap: var(--s-3); width: calc(100% + 2 * var(--s-3)); margin: 0 calc(-1 * var(--s-3)); padding: var(--s-3); background: none; border: 0; border-radius: var(--r-control); color: var(--ink); text-align: left; cursor: pointer; transition: background-color var(--m-in) var(--ease); }
+.rank:hover { background: var(--surface-2); }
+.rank > .i { color: var(--ink-2); transform: rotate(-90deg); transition: transform var(--m-in) var(--ease); }
+.rank:hover > .i { transform: translateX(2px) rotate(-90deg); }
+.rank__line { display: flex; justify-content: space-between; gap: var(--s-3); min-width: 0; font-weight: 500; }
+.rank__name { min-width: 0; overflow-wrap: anywhere; }
+.rank > span, .rank__line, .rank__meta { min-width: 0; }
+.rank > span { display: block; }
+.rank .meter { display: block; height: 6px; margin-top: 6px; }
+.rank .meter > span { display: block; height: 100%; width: 0; border-radius: 2px; transition: width var(--m-bar) var(--ease); }
+.rank__meta { display: flex; flex-wrap: wrap; gap: 2px var(--s-4); margin-top: 6px; font-size: var(--t-label); color: var(--ink-2); }
+/* Transaction rows: note and amount, then date and account. Long notes wrap. */
+.txns { margin: 0; padding: 0; list-style: none; }
+.txn { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--s-4); padding: var(--s-3) 0; border-top: 1px solid var(--line); }
+.txns > .txn:first-child { border-top: 0; }
+.txn__note { min-width: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.txn__amt { text-align: right; font-weight: 500; white-space: nowrap; }
+.txn__meta, .txn__orig { font-size: var(--t-label); color: var(--ink-2); }
+.txn__orig { text-align: right; white-space: nowrap; }
+/* A chart with more bars than fit: it scrolls sideways inside its card, never the page. */
+.chart--scroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; padding-bottom: var(--s-1); }
+.chart-split { display: flex; align-items: flex-start; }
+.chart-split > svg { flex: none; width: auto; }
+.chart--scroll svg { width: auto; max-width: none; }
+.chart-split > .chart--scroll { flex: 1; min-width: 0; }
+/* A side card that sits beside two stacked cards on wide windows, and in reading order on narrow ones. */
+.grid__side { grid-row: span 2; align-self: start; }
+@media (max-width: 1040px) { .grid__side { grid-row: auto; } }
+/* A segmented choice of two. */
+.seg--2 { --n: 2; }
+/* Step change backwards: slides in from the other side. */
+.enter--back { --dir: -8px; }

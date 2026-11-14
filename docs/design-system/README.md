@@ -110,11 +110,14 @@ All are in `system.css`, and shown in `gallery.html`.
 | Find in a list | `.search`, `.search__count`, `.search__none` | Icon first, a hidden label, a Clear button once there's text. Typing narrows the list at once and opens every group with a match. Esc clears. The count is a polite live region |
 | Name something in place | `.inline-edit`, `.add-row` | Label above, the field with its buttons beside it, then the hint or error. Enter saves, Esc cancels. The error sits under the field and clears once it's fixed |
 | Save on a long page | `.savebar` | The page's one primary button. It sticks to the bottom of the window only while there's something to say (unsaved, saved, couldn't save), otherwise it sits at the end of the page |
+| Drill-down path | `.path` | A `nav` with an `ol`. Earlier steps are `.link` buttons, the last is plain with `aria-current`. Goes back up, like the browser's Back |
+| Ranked rows that open | `.ranks`, `.rank`, `.rank__line`, `.rank__name`, `.rank__meta` | The whole row is one button: name and amount, a `.meter` bar, then share and change. Lines between rows. A right chevron moves 2px on hover |
+| Transactions | `.txns`, `.txn`, `.txn__note`, `.txn__amt`, `.txn__meta`, `.txn__orig` | Note and amount with paise, then date and account. Long notes wrap. File text is plain text only |
 | Loading | `.skel-wrap`, `.skel`, `--label`, `--figure`, `--display`, `--line`, `--spark`, `--chart`, `--row` | Blocks at the real content's shape, in `sunk` (or `rail-line` on the hero). No shimmer, no movement. Only shows when a load takes 200ms or more. The wrapper has `aria-busy="true"` and a "Loading" label |
 
 ## Charts
 
-Only bars, lines and one allocation bar. Hairline gridlines, three at most. Axis labels in short form (`₹1L`). Earned is `earned` and Spent is `spent`. Hovering a bar dims the others and shows exact figures in a dark tooltip. Every chart has a text label for screen readers.
+Only bars, lines and one allocation bar. Hairline gridlines, three at most. Axis labels in short form (`₹1L`). Earned is `earned` and Spent is `spent`. Hovering a bar dims the others and shows exact figures in a dark tooltip. Every chart has a text label for screen readers. A chart with more bars than fit (bars under 7px apart) scrolls sideways inside its card with `.chart--scroll`, opens at the latest month, and keeps its axis still beside it in `.chart-split`. The page itself never scrolls sideways.
 
 ## Icons
 
@@ -194,3 +197,4 @@ The preview control sits in a corner, not on the screen, and is the only thing a
 | 2026-11-13 | 5 | Overview build helpers at the end of `system.css`: `.hero__figure`, `.hero__delta`, `.hero__spark`, `.stat--wide`, `.card__head`, `.card__title`, `.cat-row` and `.sr-only`. They hold the approved Overview preview's inline spacings as classes (D-010), with the same values, plus `overflow-wrap` on a long category name | Small fix, noted in the handoff |
 | 2026-11-14 | 5 | Small fix: `.card--hero .delta` uses `rail-ink-2`, so a flat or falling change on the hero reads at 10.2 to 1 (was `ink-2`, 2.9 to 1 in light mode) in both themes. Gains keep `rail-gain`, and the minus sign stays (QA Q5-2) | Small fix, noted in the handoff |
 | 2026-11-14 | 5 | Small fix: each `.stat` is a size container and `.stat .figure` is `min(var(--t-figure), 15cqi)` on one line, so a crore-sized figure fits a narrow tile at 320 without touching the divider. Wide tiles look the same (QA Q5-3) | Small fix, noted in the handoff |
+| 2026-11-14 | 6 | Spending drill-down parts: `.path`, `.ranks`/`.rank`, `.txns`/`.txn`, `.chart--scroll` with `.chart-split` for long monthly charts, `.seg--2`, `.grid__side` and `.enter--back`. No new colours | Yes, 2026-11-14: "Yes, approve all" |
