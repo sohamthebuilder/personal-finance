@@ -449,6 +449,9 @@ describe("production server", { timeout: 240_000 }, () => {
     assert.deepEqual(JSON.parse((await post("/api/summary/confirm", { version: version(summaryPage) }, cookie)).body), { ok: true });
     assert.deepEqual(JSON.parse((await post("/api/start-over", { version: version(summaryPage) }, cookie)).body), { ok: false, error: "CONFIRMED" });
     assertHas((await request("/", { headers: { Cookie: cookie } })).body, /Your data is in\. Now delete the export file/);
+    // AC-13: the first visit after the first upload rolls up from zero, once.
+    assert.equal(JSON.parse((await post("/api/overview", {}, cookie)).body).rollUp, true);
+    assert.equal(JSON.parse((await post("/api/overview", {}, cookie)).body).rollUp, false);
 
     // Screen 8: the same file matches; a file missing most accounts needs the tick, on the server too.
     assert.deepEqual(JSON.parse((await upload("/api/update/upload", firstFile, cookie)).body), { ok: true, same: true });
@@ -495,9 +498,16 @@ describe("production server", { timeout: 240_000 }, () => {
     assertHasNot((await request("/", { headers: { Cookie: cookie } })).body, /Your data is back to how it was/);
     assertHasNot((await request("/settings", { headers: { Cookie: cookie } })).body, /Your data is back to how it was/);
 
-    // Screen 7 with the placeholder Overview.
+    // Screen 7 with screen 9, the Overview, whose figures come from its own route (Phase 5).
     const shell = await request("/", { headers: { Cookie: cookie } });
-    assertHas(shell.body, /Your Overview arrives in the next phase\./);
+    assertHasNot(shell.body, /Your Overview arrives/);
+    assertHas(shell.body, /aria-label="Loading"/);
+    const overview = JSON.parse((await post("/api/overview", {}, cookie)).body);
+    assert.equal(overview.ok, true);
+    assert.equal(typeof overview.overview.netWorth, "number");
+    assert.equal(overview.overview.bars.points.length, 12);
+    assert.equal(overview.rollUp, false, "the roll-up from zero happens once only");
+    assert.equal(typeof JSON.parse((await request("/api/status", { headers: { Cookie: cookie } })).body).version, "number");
     assertHas(shell.body, /Log out/);
     assertHasNot(shell.body, /\sstyle="/);
     assert.equal((await post("/api/period", { period: "last-12" }, cookie)).status, 200);
@@ -508,6 +518,12 @@ describe("production server", { timeout: 240_000 }, () => {
 
     // Log out: expired cookie, cache cleared, Locked screen.
     const out = await post("/api/logout", {}, cookie);
+    // AC-17: locked, the Overview's routes answer 401 with no figures.
+    for (const path of ["/api/overview", "/api/overview/old-note"]) {
+      const locked = await post(path, {}, cookie);
+      assert.equal(locked.status, 401, path);
+      assertHasNot(locked.body, /netWorth|earned|spent/);
+    }
     assert.equal(out.status, 200);
     assert.equal(out.headers["clear-site-data"], '"cache"');
     assert.match(out.headers["set-cookie"]?.[0] ?? "", /^pf_session=; Path=\/; HttpOnly; SameSite=Strict; Expires=Thu, 01 Jan 1970/);

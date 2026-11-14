@@ -35,6 +35,8 @@ export interface Unlocked {
   period: Period;
   /** The one file waiting on screen 8. Parsed rows only, in memory only. Gone on cancel, lock, log out, a new upload and confirm. */
   pending: PendingUpdate | null;
+  /** The Overview's old-upload note was dismissed. Lasts until the next log in (design, "Stale data"). */
+  oldNoteDismissed?: boolean;
 }
 
 export interface SessionStore {
@@ -51,6 +53,8 @@ export interface SessionStore {
   justDeleted: boolean;
   /** Set when a lock threw away a file waiting on screen 8, so the upload screen can say so once. */
   lostUpload: boolean;
+  /** The Overview has done its one roll-up from zero after the first upload. A delete clears it. */
+  rolledUp: boolean;
   /** The last screen the owner was on, from the fixed list, for after log in. */
   returnTo: ReturnScreen;
   sweeper: ReturnType<typeof setInterval> | null;
@@ -70,6 +74,7 @@ function freshStore(): SessionStore {
     changes: Promise.resolve(),
     justDeleted: false,
     lostUpload: false,
+    rolledUp: false,
     returnTo: "/",
     sweeper: null,
     // The wall clock, so time asleep counts as idle (S4-4).

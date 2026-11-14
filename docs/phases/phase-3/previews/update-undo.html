@@ -183,6 +183,7 @@ svg.i { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor;
 .card { background: var(--surface); border-radius: var(--r-card); box-shadow: var(--shadow-card); padding: var(--s-5); min-width: 0; }
 .card--hero { position: relative; overflow: hidden; color: var(--rail-ink); box-shadow: none; background: radial-gradient(90% 80% at 100% 110%, var(--glow-1) 0%, var(--glow-2) 40%, transparent 78%), var(--rail); }
 .card--hero .label, .card--hero .muted { color: var(--rail-ink-2); }
+.card--hero .delta { color: var(--rail-ink-2); }
 .card--hero .delta--up { color: var(--rail-gain); }
 .note { display: flex; gap: var(--s-3); align-items: flex-start; padding: var(--s-3) var(--s-4); border-radius: var(--r-control); animation: fade var(--m-in) var(--ease); }
 .note > .i { margin-top: 2px; }
@@ -277,6 +278,9 @@ svg.i { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor;
 .stat { padding: var(--s-4) var(--s-5); min-width: 0; }
 .stat:nth-child(even) { border-left: 1px solid var(--line); }
 .stat .label { margin-bottom: 2px; }
+/* A stat figure shrinks with its tile, never past it: a crore fits a narrow tile without touching the divider. */
+.stat { container-type: inline-size; }
+.stat .figure { font-size: min(var(--t-figure), 15cqi); white-space: nowrap; }
 .stat:nth-child(n+3) { border-top: 1px solid var(--line); }
 .chart { position: relative; width: 100%; }
 .chart svg { display: block; width: 100%; overflow: visible; }
@@ -436,6 +440,44 @@ a.pop__opt { color: var(--ink); }
   .savebar__text { flex-basis: 100%; }
   .savebar .btn { flex: 1 1 0; }
 }
+
+/* ---------- Loading skeleton (Phase 5) ---------- */
+/* Blocks at the real content's shape. No shimmer, no movement. The wrapper carries aria-busy and a hidden "Loading" label. */
+.skel { display: block; height: 14px; width: 100%; background: var(--sunk); border-radius: 6px; }
+.card--hero .skel { background: var(--rail-line); }
+.skel--label { height: 13px; width: 40%; }
+.skel--figure { height: 26px; width: 64%; margin-top: var(--s-2); }
+.skel--display { height: 44px; width: 72%; margin-top: var(--s-1); }
+.skel--line { width: 56%; margin-top: var(--s-2); }
+.skel--spark { height: 72px; margin-top: var(--s-4); border-radius: var(--r-control); }
+.skel--chart { height: 200px; margin-top: var(--s-3); border-radius: var(--r-control); }
+.skel--row { height: 32px; margin-top: var(--s-3); }
+.skel-wrap { animation: fade var(--m-in) var(--ease); }
+@media (max-width: 480px) {
+  .skel--display { height: 36px; }
+}
+
+/* ---------- Narrow date row (Phase 5, Q4-9) ---------- */
+/* At 380px or less, day and month share a row and the year takes its own, so "2026" never cuts off. */
+@media (max-width: 380px) {
+  .date-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
+  .date-row > :last-child { grid-column: 1 / -1; }
+}
+
+/* ---------- Overview build helpers (Phase 5) ----------
+   The approved Overview preview's inline spacings as classes (D-010). Same values. */
+.hero__figure { margin-top: var(--s-1); }
+.hero__delta { margin-top: 6px; }
+.hero__spark { margin-top: var(--s-3); }
+.stat--wide { grid-column: 1 / -1; }
+.card__head { display: flex; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; margin-bottom: var(--s-3); }
+.card__title { margin-bottom: var(--s-3); }
+.cat-row { margin-bottom: var(--s-3); }
+.cat-row__line { display: flex; justify-content: space-between; gap: var(--s-3); min-width: 0; }
+.cat-row__name { min-width: 0; overflow-wrap: anywhere; }
+.cat-row .meter { height: 6px; margin-top: 6px; }
+/* Read by screen readers only. */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 </style>
 <style>
 /* Preview control only. Not part of the app. */

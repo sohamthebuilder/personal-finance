@@ -118,3 +118,28 @@ export function netWorthBreakdown(rows: readonly ImportRow[], setup: Setup, peri
     earned, spent, otherCorrections, unmatchedTransfers,
   };
 }
+
+export interface CategorySpend {
+  /** The category as written in the file. Blank stays blank; screens label it. */
+  category: string;
+  spent: number;
+}
+
+/**
+ * Spending by category for a period, biggest first, using the same rows and
+ * dates as `periodMetrics`, so the lines add up to its Spent. Ties go by name.
+ */
+export function spendingByCategory(rows: readonly ImportRow[], period: Period, today: string): CategorySpend[] {
+  checkPeriod(period, today);
+  const end = earlierOf(period.to, today);
+  const totals = new Map<string, number>();
+  for (const row of rows) {
+    if (row.type !== "Exp.") continue;
+    const date = dateOf(row);
+    if (date < period.from || date > end) continue;
+    totals.set(row.category, (totals.get(row.category) ?? 0) + row.amountPaise);
+  }
+  return [...totals]
+    .map(([category, spent]) => ({ category, spent }))
+    .sort((a, b) => b.spent - a.spent || (a.category < b.category ? -1 : a.category > b.category ? 1 : 0));
+}

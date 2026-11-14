@@ -114,6 +114,9 @@ describe("no shortcut in 4A (condition 52)", () => {
       "login/route.ts",
       "logout/route.ts",
       "note/dismiss/route.ts",
+      // Phase 5: the Overview's figures, and dismissing its old-upload note. Neither changes data.
+      "overview/old-note/route.ts",
+      "overview/route.ts",
       "password/create/route.ts",
       "period/route.ts",
       "setup/route.ts",

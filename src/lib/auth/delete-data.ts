@@ -44,6 +44,7 @@ export function finishDelete(files: DataFiles): boolean {
     return false;
   }
   sessionStore().justDeleted = true;
+  sessionStore().rolledUp = false;
   return true;
 }
 
