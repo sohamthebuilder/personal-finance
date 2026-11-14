@@ -12,6 +12,7 @@ import { UploadDrop } from "./ui/upload-drop.tsx";
 import { appFiles } from "../lib/auth/start-screen.ts";
 import { CreatePasswordForm } from "./ui/create-password.tsx";
 import { Icon } from "./ui/icons.tsx";
+import { OverviewScreen } from "./ui/overview.tsx";
 import { LogIn } from "./ui/log-in.tsx";
 import { FinishDelete } from "./ui/finish-delete.tsx";
 import { currentScreen, shellData } from "./ui/server-state.ts";
@@ -100,12 +101,8 @@ export default async function StartPage() {
       const state = session === null ? null : dataState(session.db);
       return (
         <Shell screen="overview" {...header}>
-          {state?.note && <DataNote kind={state.note} version={state.version} undoDate={state.undoDate === null ? null : longDate(state.undoDate)} />}
-          <div className="card">
-            <h2>Overview</h2>
-            <p className="muted">{range}</p>
-            <p className="muted mt-4">Your Overview arrives in the next phase.</p>
-          </div>
+          {state?.note && <DataNote key={`${state.note}|${state.version}`} kind={state.note} version={state.version} undoDate={state.undoDate === null ? null : longDate(state.undoDate)} />}
+          <OverviewScreen periodKey={`${header.period}|${range}`} />
         </Shell>
       );
     }

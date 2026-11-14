@@ -78,6 +78,8 @@ export function PeriodPicker({ initial, firstYear, today }: { initial: string; f
   const dialogRef = useRef<HTMLDivElement>(null);
   // The server redraws the page, so the range line shows the chosen dates (Q4-4).
   const router = useRouter();
+  // The server can change the period too ("Show this month"), so follow what it sends.
+  useEffect(() => setValue(initial), [initial]);
   const thisYear = Number(today.slice(0, 4));
   const years: Choice[] = [];
   for (let year = Math.min(firstYear, thisYear); year <= thisYear; year += 1) years.push({ value: String(year), label: String(year) });
