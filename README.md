@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <img alt="Phase 5 of 14" src="https://img.shields.io/badge/phase-5%20of%2014-FF8A47?style=flat-square">
-  <img alt="479 tests passing" src="https://img.shields.io/badge/tests-479%20passing-2E7D4F?style=flat-square">
+  <img alt="Phase 7 of 14" src="https://img.shields.io/badge/phase-7%20of%2014-FF8A47?style=flat-square">
+  <img alt="545 tests passing" src="https://img.shields.io/badge/tests-545%20passing-2E7D4F?style=flat-square">
   <img alt="Local only" src="https://img.shields.io/badge/data-local%20only-1F140D?style=flat-square">
   <img alt="0 known vulnerabilities" src="https://img.shields.io/badge/vulnerabilities-0-2E7D4F?style=flat-square">
   <img alt="Node 24.7 or newer" src="https://img.shields.io/badge/node-%E2%89%A524.7-6A5C52?style=flat-square">
@@ -27,7 +27,7 @@
 | ![Review screen showing new, changed and removed rows](docs/images/update-review.png) | ![Setup screen for grouping accounts](docs/images/setup.png) |
 
 > [!NOTE]
-> These are design previews with made-up data. The import, the money calculations and the design of every screen are finished. In the running app so far, you can create a password, log in, lock it and delete your data. Upload and the dashboards come next.
+> These are design previews with made-up data. The import, the money calculations and the design of every screen are finished. In the running app so far, you can create a password, log in, upload and update your export, undo an update, and use the Overview and Spending dashboards. Savings & Net worth, and Accounts & Investments, come next.
 
 ## 🧭 What it does
 
@@ -102,7 +102,7 @@ Decisions are logged as they happen. There are 25 so far, in [`docs/DECISIONS.md
 
 ## 📈 Progress so far
 
-<img src="docs/images/readme-progress.svg" alt="Build progress: phases 0 to 4 done, phases 5 to 13 planned" width="100%">
+<img src="docs/images/readme-progress.svg" alt="Build progress: phases 0 to 6 done, phases 7 to 13 to come" width="100%">
 
 | Phase | What it delivered | Result |
 |---|---|---|
@@ -112,11 +112,14 @@ Decisions are logged as they happen. There are 25 so far, in [`docs/DECISIONS.md
 | ✅ 3. Flows and screens | 16 screens specified, a design system, 3 clickable previews | 23 criteria checked and owner signed off. Security caught 2 Blockers and 6 Majors, all fixed |
 | ✅ 4A. Getting in safely | Create password, log in with slow-down, auto-lock, the app shell, delete my data, the forgotten-password wipe | QA found 1 Blocker, fixed and re-tested. Security signed off with no Blocker or Major. Owner signed off |
 | ✅ 4B. Upload and setup | First upload, setup with your own income and expense groups, summary, update with preview, one-step encrypted undo | QA passed all 19 criteria with no Blocker or Major. 6 small QA issues and 2 small security issues fixed and re-checked. Security and owner signed off |
-| 🔜 5 to 8 | The four dashboards | Next |
+| ✅ 5. Overview dashboard | Net worth with its change and 12-month line, Earned, Spent, Saved and Invested, monthly bars, top 5 categories, and every loading, empty, error and stale state | QA found 2 Majors (unreadable chart labels on long ranges, a fall in net worth hard to read in light mode), both fixed and re-tested. Security and owner signed off |
+| ✅ 6. Spending dashboard | Ranked categories, then subcategories with a monthly trend, then transactions. Overview's top categories open it | QA found 1 Blocker (bars animating when they shouldn't), fixed and re-tested. Security and owner signed off |
+| 🔄 7. Savings & Net worth | Savings rate by month, and net worth over time with every change explained | In progress |
+| 🔜 8 | Accounts & Investments dashboard | Next |
 | 🗓️ 9 to 12 | AI rules and evals, then provider, tools and chat | Planned |
 | 🗓️ 13 | Final hardening, and the owner's real-file check | Planned |
 
-Today: **479** automated tests passing · **0** known dependency vulnerabilities · a clean data guard.
+Today: **545** automated tests passing · **0** known dependency vulnerabilities · a clean data guard.
 
 ### 🎯 What the process has caught
 
@@ -125,11 +128,13 @@ Today: **479** automated tests passing · **0** known dependency vulnerabilities
 - **Bugs caught while still just words.** In Phase 3, Security found the app could say "You're logged out" with the session still live, and a half-finished delete could leave the app stuck. Fixing a sentence is far cheaper than fixing code.
 - **A small Blocker before it shipped.** In Phase 4A, QA found the date pickers in "Choose a period" overlapping on wide windows. It was fixed and re-checked by a fresh QA agent before merge.
 - **A change of mind, handled by the gate.** In Phase 4B, the owner saw the setup preview and found the Earned, Returns and Loan labels too complicated. Work paused, the brief and designs were redrawn, and only after the owner's yes was the simpler version built: their own income and expense groups.
-- **A budget line that worked.** Phase 3 ran from 50 to 90 points. Work stopped at the line, and the owner chose to raise it. Design took more than planned, a useful input for later phases.
+- **Charts checked at the edges.** In Phase 5, QA tried a four-year date range and found the month labels piling on top of each other, and saw that a fall in net worth was hard to read in light mode. Both were fixed before merge.
+- **A budget line that worked.** Phase 3 ran from 50 to 90 points. Work stopped at the line, and the owner chose to raise it. Phase 6 stopped at its line too, after QA, and the owner chose to finish the fixes in a fresh session, 5 points over.
 
 ### ⚠️ Known limits, stated plainly
 
-- The dashboards aren't built yet. You can log in, upload an export, group your accounts, income and expenses, review an update and undo it, but Overview is still a placeholder.
+- Two of the four dashboards are built: Overview and Spending. Savings & Net worth, and Accounts & Investments, are still to come.
+- A few small issues are logged for later rather than fixed, such as a very large negative figure running slightly out of its box on a 320-pixel phone screen.
 - All income counts as Earned, so a loan or investment gain logged as income makes the savings rate look higher that month. The owner accepted this to keep setup simple.
 - Nothing has been tested on real data, on purpose, until Phase 13.
 - There's no password reset, because a reset would be a back door. A forgotten password means starting again from the latest export.
